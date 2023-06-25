@@ -11,21 +11,21 @@ export default memo(function SvgIcon(props: SvgIconProps) {
   const { className, SvgComponent, size, value = 12 } = props;
 
   const _size: number = useMemo(() => {
-    let value = 24;
+    let _value = 24;
     switch (size) {
       case 'small':
-        value = 16;
+        _value = 16;
         break;
       case 'medium':
-        value = 24;
+        _value = 24;
         break;
       case 'large':
-        value = 30;
+        _value = 30;
         break;
       default:
         break;
     }
-    return value;
+    return _value;
   }, [size]);
 
   return SvgComponent ? (

@@ -1,7 +1,14 @@
 /** @jsxImportSource @emotion/react */
 import { StepItem } from '@/models/StepList';
 import { css } from '@emotion/react';
-import { Fragment, memo, useCallback, useEffect, useMemo } from 'react';
+import {
+  Fragment,
+  KeyboardEventHandler,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+} from 'react';
 import { ReactComponent as IconClick } from '@/assets/imgs/icon-click.svg';
 import { ReactComponent as IconDelete } from '@/assets/imgs/icon-delete.svg';
 import { ReactComponent as IconLocate } from '@/assets/imgs/icon-locate.svg';
@@ -87,41 +94,47 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
     console.log('changed', { stepItems });
   }, [stepItems]);
 
+  const selectorInputElement = document.getElementById(
+    `selector-editable-input-${index}`
+  ) as HTMLInputElement;
+
   useEffect(() => {
-    const input = document.getElementById(
-      `selector-editable-input-${index}`
-    ) as HTMLInputElement;
     const setTargetInputWidth = () => {
-      input.style.width = `${(input.value.length + 1) * 8}px`;
+      selectorInputElement.style.width = `${
+        (selectorInputElement.value.length + 1) * 8
+      }px`;
     };
-    if (input) {
+    if (selectorInputElement) {
       console.log(`found "input:selector"`);
       setTargetInputWidth();
-      input.addEventListener('input', setTargetInputWidth);
+      selectorInputElement.addEventListener('input', setTargetInputWidth);
     }
 
     return () => {
-      input && input.removeEventListener('input', setTargetInputWidth);
+      selectorInputElement?.removeEventListener('input', setTargetInputWidth);
     };
-  }, [index]);
+  }, [index, selectorInputElement]);
+
+  const variableInputElement = document.getElementById(
+    `variable-editable-input-${index}`
+  ) as HTMLInputElement;
 
   useEffect(() => {
-    const input = document.getElementById(
-      `variable-editable-input-${index}`
-    ) as HTMLInputElement;
     const setTargetInputWidth = () => {
-      input.style.width = `${(input.value.length + 1) * 8}px`;
+      variableInputElement.style.width = `${
+        (variableInputElement.value.length + 1) * 8
+      }px`;
     };
-    if (input) {
+    if (variableInputElement) {
       console.log(`found "input:variable"`);
       setTargetInputWidth();
-      input.addEventListener('input', setTargetInputWidth);
+      variableInputElement.addEventListener('input', setTargetInputWidth);
     }
 
     return () => {
-      input && input.removeEventListener('input', setTargetInputWidth);
+      variableInputElement.removeEventListener('input', setTargetInputWidth);
     };
-  }, [index]);
+  }, [index, variableInputElement]);
 
   const titleInfo = useMemo(() => {
     switch (item.type) {
@@ -266,10 +279,26 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
     setCurrSelectedItem({ ...stepItems[index], index });
   }, [index, setCurrSelectedItem, stepItems]);
 
+  const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = useCallback(
+    (event) => {
+      if (event.key === 'Enter') {
+        handleClickStepItem();
+      }
+    },
+    [handleClickStepItem]
+  );
+
+  const _key = useMemo(() => {
+    return Math.random() + index;
+  }, [index]);
+
   return (
     <div
-      key={index}
+      key={_key}
       onClick={handleClickStepItem}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={_key}
       css={css`
         display: flex;
         flex-direction: column;

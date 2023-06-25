@@ -1,6 +1,13 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  KeyboardEventHandler,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { ReactComponent as IconMore } from '@/assets/imgs/icon-more-normalmode.svg';
 import { ReactComponent as IconHelp } from '@/assets/imgs/icon-help.svg';
 import { ReactComponent as IconCreatestore } from '@/assets/imgs/icon-createstore.svg';
@@ -20,6 +27,171 @@ import Button from '../components/Button';
 import SvgIcon from '../components/SvgIcon';
 
 const { DirectoryTree } = Tree;
+
+/**
+ * @function useSelectorTreeData: 总结转化为自定义化;
+ * @param selectors: api返回元数据(回显时 or etc.)
+ * @returns treeNodes: 过滤后为antd组件可用的DataNode[]
+ * @returns getSelectors: api请求selector列表
+ */
+export function useSelectorTreeData() {
+  const selectors = useSelectorStore((state) => state.selectors);
+  const getSelectors = useSelectorStore((state) => state.getSelectors);
+
+  const [treeNodes, setTreeNodes] = useState<DataNode[]>([]);
+
+  const getTitle = useCallback(
+    (selector: SelectorStore | SelectorStoreFolder): React.ReactNode => {
+      if ('storeName' in selector) {
+        return (
+          <div
+            css={css`
+              height: 20px;
+              line-height: 20px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            `}
+          >
+            <SvgIcon
+              value={16}
+              SvgComponent={IconStore}
+              css={css`
+                margin-right: 9px;
+                fill: #ffffff;
+              `}
+            />
+
+            {selector.storeName}
+          </div>
+        );
+      }
+      if ('folderName' in selector) {
+        return (
+          <div
+            css={css`
+              height: 20px;
+              line-height: 20px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            `}
+          >
+            <SvgIcon
+              value={14}
+              SvgComponent={IconFolder}
+              css={css`
+                margin-right: 9px;
+                fill: #ffffff;
+              `}
+            />
+
+            {selector.folderName}
+          </div>
+        );
+      }
+      return (
+        <div
+          css={css`
+            height: 20px;
+            line-height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          `}
+        >
+          <SvgIcon
+            value={14}
+            SvgComponent={IconFolder}
+            css={css`
+              margin-right: 9px;
+              fill: #ffffff;
+            `}
+          />
+
+          {`Unknown-${Math.random()}`}
+        </div>
+      );
+    },
+    []
+  );
+
+  const solveTreeNodes = useCallback(
+    (selectorsParam: (SelectorStore | SelectorStoreFolder)[]): DataNode[] => {
+      const result: DataNode[] = [];
+      if (selectorsParam && selectorsParam.length > 0) {
+        selectorsParam.forEach((selector) => {
+          const node: DataNode = {
+            key: selector.key,
+            title: getTitle(selector),
+            children: [], // 初始值为 []
+          };
+          if (selector.selectors && selector.selectors.length > 0) {
+            node.children = selector.selectors.map((item) => ({
+              key: item.key,
+              title: (
+                <div
+                  css={css`
+                    height: 20px;
+                    line-height: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                  `}
+                >
+                  <SvgIcon
+                    value={16}
+                    SvgComponent={IconSelectorAddByClick}
+                    css={css`
+                      fill: #ffffff;
+                      margin-right: 9px;
+                    `}
+                  />
+
+                  {item.selectorName}
+                </div>
+              ),
+            }));
+          }
+          if (selector.folders && selector.folders.length > 0) {
+            node.children = [
+              ...(node.children ?? []),
+              ...uniqBy(solveTreeNodes(selector.folders), 'key').map(
+                (folder) => ({
+                  ...folder,
+                  title: folder.title || folder.key.toString(), // 使用 key 作为默认 title
+                })
+              ),
+            ];
+          }
+          result.push(node);
+        });
+        return result;
+      }
+      return [];
+    },
+    [getTitle]
+  );
+
+  const init = useCallback(async () => {
+    const _selectors = await getSelectors();
+    return _selectors;
+  }, [getSelectors]);
+
+  useEffect(() => {
+    init();
+    console.log();
+  }, [init]);
+
+  useEffect(() => {
+    if (selectors) {
+      const res = solveTreeNodes(selectors);
+      setTreeNodes(res);
+    }
+  }, [selectors, solveTreeNodes]);
+
+  return { treeNodes, getSelectors };
+}
 
 const PopMore = memo(() => {
   const createStore = useCallback(() => {
@@ -66,9 +238,19 @@ const PopMore = memo(() => {
       `}
     >
       {listItem.map((item, key) => {
+        const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = (event) => {
+          if (event.key === 'Enter') {
+            item.action();
+          }
+        };
+        const _key = Math.random() + key;
         return (
           <div
-            key={key}
+            key={_key}
+            onClick={item.action}
+            tabIndex={_key}
+            role="button"
+            onKeyDown={handleKeyDown}
             css={css`
               flex: 1;
               display: flex;
@@ -81,7 +263,6 @@ const PopMore = memo(() => {
                 background-color: #eaeaeb;
               }
             `}
-            onClick={item.action}
           >
             <SvgIcon
               SvgComponent={item.icon}
@@ -117,8 +298,8 @@ const findKeyBySelectorName = (
   nodes: SelectorStore[] | SelectorStoreFolder[],
   selectorName: string
 ): Key[] => {
-  let res: Key[] = []; // 新增数组 res 保存结果
-  for (const node of nodes) {
+  const res: Key[] = []; // 新增数组 res 保存结果
+  nodes.forEach((node) => {
     if (node.selectors) {
       const selectorNode = node.selectors.find(
         (selector) => selector.selectorName === selectorName
@@ -129,9 +310,9 @@ const findKeyBySelectorName = (
     }
     if (node.folders) {
       const keys = findKeyBySelectorName(node.folders, selectorName);
-      res = res.concat(keys); // 引用数组方法 concat 将数组合并到 res 中
+      res.push(...keys); // 使用展开语法添加 keys 数组元素到 res 中
     }
-  }
+  });
   return res;
 };
 
@@ -170,10 +351,12 @@ export const SelectorTree = memo(() => {
     setShowMore(!showMore);
   }, [showMore]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onSelect: DirectoryTreeProps['onSelect'] = (keys, info) => {
     setSelectedKeys(keys);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onExpand: DirectoryTreeProps['onExpand'] = (keys, info) => {
     setExpandKeys(keys);
   };
@@ -273,168 +456,3 @@ export const SelectorTree = memo(() => {
     </div>
   );
 });
-
-/**
- * @function useSelectorTreeData: 总结转化为自定义化;
- * @param selectors: api返回元数据(回显时 or etc.)
- * @returns treeNodes: 过滤后为antd组件可用的DataNode[]
- * @returns getSelectors: api请求selector列表
- */
-export function useSelectorTreeData() {
-  const selectors = useSelectorStore((state) => state.selectors);
-  const getSelectors = useSelectorStore((state) => state.getSelectors);
-
-  const [treeNodes, setTreeNodes] = useState<DataNode[]>([]);
-
-  const getTitle = useCallback(
-    (selector: SelectorStore | SelectorStoreFolder): React.ReactNode => {
-      if ('storeName' in selector) {
-        return (
-          <div
-            css={css`
-              height: 20px;
-              line-height: 20px;
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-            `}
-          >
-            <SvgIcon
-              value={16}
-              SvgComponent={IconStore}
-              css={css`
-                margin-right: 9px;
-                fill: #ffffff;
-              `}
-            />
-
-            {selector.storeName}
-          </div>
-        );
-      }
-      if ('folderName' in selector) {
-        return (
-          <div
-            css={css`
-              height: 20px;
-              line-height: 20px;
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-            `}
-          >
-            <SvgIcon
-              value={14}
-              SvgComponent={IconFolder}
-              css={css`
-                margin-right: 9px;
-                fill: #ffffff;
-              `}
-            />
-
-            {selector.folderName}
-          </div>
-        );
-      }
-      return (
-        <div
-          css={css`
-            height: 20px;
-            line-height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-          `}
-        >
-          <SvgIcon
-            value={14}
-            SvgComponent={IconFolder}
-            css={css`
-              margin-right: 9px;
-              fill: #ffffff;
-            `}
-          />
-
-          {`Unknown-${Math.random()}`}
-        </div>
-      );
-    },
-    []
-  );
-
-  const solveTreeNodes = useCallback(
-    (selectors: (SelectorStore | SelectorStoreFolder)[]): DataNode[] => {
-      const result: DataNode[] = [];
-      if (selectors && selectors.length > 0) {
-        selectors.forEach((selector) => {
-          const node: DataNode = {
-            key: selector.key,
-            title: getTitle(selector),
-            children: [], // 初始值为 []
-          };
-          if (selector.selectors && selector.selectors.length > 0) {
-            node.children = selector.selectors.map((selector) => ({
-              key: selector.key,
-              title: (
-                <div
-                  css={css`
-                    height: 20px;
-                    line-height: 20px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                  `}
-                >
-                  <SvgIcon
-                    value={16}
-                    SvgComponent={IconSelectorAddByClick}
-                    css={css`
-                      fill: #ffffff;
-                      margin-right: 9px;
-                    `}
-                  />
-
-                  {selector.selectorName}
-                </div>
-              ),
-            }));
-          }
-          if (selector.folders && selector.folders.length > 0) {
-            node.children = [
-              ...(node.children ?? []),
-              ...uniqBy(solveTreeNodes(selector.folders), 'key').map(
-                (folder) => ({
-                  ...folder,
-                  title: folder.title || folder.key.toString(), // 使用 key 作为默认 title
-                })
-              ),
-            ];
-          }
-          result.push(node);
-        });
-        return result;
-      }
-      return [];
-    },
-    [getTitle]
-  );
-
-  const init = useCallback(async () => {
-    const _selectors = await getSelectors();
-    return _selectors;
-  }, [getSelectors]);
-
-  useEffect(() => {
-    init();
-    console.log();
-  }, [init]);
-
-  useEffect(() => {
-    if (selectors) {
-      const res = solveTreeNodes(selectors);
-      setTreeNodes(res);
-    }
-  }, [selectors, solveTreeNodes]);
-
-  return { treeNodes, getSelectors };
-}
