@@ -8,7 +8,7 @@ import { css } from '@emotion/react';
 import { Select } from 'antd';
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
-const Css_General = css`
+const cssGeneral = css`
   display: flex;
   flex: 1;
   width: 100%;
@@ -17,13 +17,13 @@ const Css_General = css`
   justify-content: flex-start;
   background: #ffffff;
 `;
-const Css_Select = css`
+const cssSelect = css`
   width: 151px;
   .ant-select-selector {
     height: 24px;
   }
 `;
-const Css_LabelText = css`
+const cssLabelText = css`
   margin-left: 24px;
   height: 20px;
   line-height: 20px;
@@ -38,6 +38,7 @@ interface SettingSelectAreaProps {
   cursorPosition?: { x: number; y: number };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const SettingSelectArea = memo((props: SettingSelectAreaProps) => {
   //   const { cursorPosition } = props;
   const captureTechSelected = useSettingAreaStore(
@@ -161,7 +162,7 @@ export const SettingSelectArea = memo((props: SettingSelectAreaProps) => {
         background: #ffffff;
       `}
     >
-      <div css={Css_General}>
+      <div css={cssGeneral}>
         <div
           css={css`
             display: flex;
@@ -172,7 +173,7 @@ export const SettingSelectArea = memo((props: SettingSelectAreaProps) => {
             justify-content: flex-start;
           `}
         >
-          <p css={Css_LabelText}>Capture Technology:</p>
+          <p css={cssLabelText}>Capture Technology:</p>
         </div>
 
         <div
@@ -185,14 +186,14 @@ export const SettingSelectArea = memo((props: SettingSelectAreaProps) => {
           `}
         >
           <Select
-            css={Css_Select}
+            css={cssSelect}
             options={captureOptions}
             value={captureTechSelected}
             onChange={handleCaptureOptionChanged}
           />
         </div>
       </div>
-      <div css={Css_General}>
+      <div css={cssGeneral}>
         <div
           css={css`
             display: flex;
@@ -203,7 +204,7 @@ export const SettingSelectArea = memo((props: SettingSelectAreaProps) => {
             justify-content: flex-start;
           `}
         >
-          <p css={Css_LabelText}>Advanced Option:</p>
+          <p css={cssLabelText}>Advanced Option:</p>
         </div>
 
         <div
@@ -216,14 +217,14 @@ export const SettingSelectArea = memo((props: SettingSelectAreaProps) => {
           `}
         >
           <Select
-            css={Css_Select}
+            css={cssSelect}
             options={advancedOptions}
             value={advancedOptionSelected}
             onChange={handleAdvancedOptionChanged}
           />
         </div>
       </div>
-      <div css={Css_General}>
+      <div css={cssGeneral}>
         <div
           css={css`
             display: flex;
@@ -234,7 +235,7 @@ export const SettingSelectArea = memo((props: SettingSelectAreaProps) => {
             justify-content: flex-start;
           `}
         >
-          <p css={Css_LabelText}>Cursor Position(X,Y):</p>
+          <p css={cssLabelText}>Cursor Position(X,Y):</p>
         </div>
         <div
           css={css`

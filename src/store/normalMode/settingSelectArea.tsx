@@ -13,15 +13,13 @@ export interface SettingAreaStoreState {
   ) => void;
 }
 
-export const useSettingAreaStore = create<SettingAreaStoreState>(
-  (set, get) => ({
-    captureTechSelected: 'AutoDetect',
-    setCaptureTechSelected: (captureTechSelected: CaptureTechnologyType) => {
-      set({ captureTechSelected });
-    },
-    advancedOptionSelected: '',
-    setAdvancedOptionSelected: (advancedOptionSelected: AdvancedOptionType) => {
-      set({ advancedOptionSelected });
-    },
-  })
-);
+export const useSettingAreaStore = create<SettingAreaStoreState>((set) => ({
+  captureTechSelected: 'AutoDetect',
+  setCaptureTechSelected: (captureTechSelected: CaptureTechnologyType) => {
+    set({ captureTechSelected });
+  },
+  advancedOptionSelected: '',
+  setAdvancedOptionSelected: (advancedOptionSelected: AdvancedOptionType) => {
+    set({ advancedOptionSelected });
+  },
+}));

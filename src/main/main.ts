@@ -12,10 +12,9 @@ import path from 'path';
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
+import reLoader from 'electron-reloader';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-
-const reLoader = require('electron-reloader');
 
 reLoader(module);
 

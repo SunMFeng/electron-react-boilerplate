@@ -55,6 +55,7 @@ export default memo(
           `,
         ]}
         className={className}
+        // eslint-disable-next-line react/jsx-props-no-spreading
         {...antButtonProps}
       >
         {children}

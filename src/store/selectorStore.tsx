@@ -12,20 +12,21 @@ export interface SelectorStoreAction {
 
 export const useSelectorStore = create<
   SelectorStoreState & SelectorStoreAction
->((set, get) => ({
+>((set) => ({
   selectors: [],
   setSelectors: (selectors: SelectorStore[]) => {
     set({ selectors });
   },
   getSelectors: async () => {
     try {
-      const _selectors =
+      const mySelectors =
         await SelectorStoreHttpService.selectorStore.getSelectors();
-      const res = _selectors || [];
+      const res = mySelectors || [];
       set({ selectors: res });
       return res;
     } catch (error) {
       console.log(error);
     }
+    return [];
   },
 }));
