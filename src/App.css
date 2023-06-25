@@ -1,0 +1,60 @@
+.App {
+  text-align: center;
+  width: 327px;
+  height: 646px;
+  max-width: 646px;
+  background-color: green;
+  display: flex;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/*定义滚动条样式*/
+::-webkit-scrollbar {
+  width: 6px;
+  height: 8px;
+  background-color: #ffffff;
+}
+/* ::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px #eee;
+  border-radius: 6px;
+  background-color: #ffffff;
+} */
+::-webkit-scrollbar-thumb {
+  border-radius: 6px;
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+  background-color: #bfbfbf;
+}
