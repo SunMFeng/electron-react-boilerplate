@@ -6,6 +6,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ReactComponent as IconMore } from '@/assets/imgs/icon-more-normalmode.svg';
@@ -23,6 +24,7 @@ import type { Key } from 'rc-tree/lib/interface';
 import { SelectorStore, SelectorStoreFolder } from '@/models/SelectorStore';
 import { useSelectorStore } from '@/store/selectorStore';
 import { useModeSwitcherStore } from '@/store/modeSwitcher';
+import { Dropdown, MenuProps } from 'antd';
 import Button from '../components/Button';
 import SvgIcon from '../components/SvgIcon';
 
@@ -180,7 +182,6 @@ export function useSelectorTreeData() {
 
   useEffect(() => {
     init();
-    console.log();
   }, [init]);
 
   useEffect(() => {
@@ -361,6 +362,74 @@ export const SelectorTree = memo(() => {
     setExpandKeys(keys);
   };
 
+  // ===================Treenode右键菜单自定义相关=====================
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isOpenDropDown, setIsOpenDropDown] = useState(false);
+
+  const listItems: MenuProps['items'] = useMemo(
+    () => [
+      {
+        label: 'Recapture',
+        key: 'Recapture',
+        // handleClick: () => undefined,
+      },
+      {
+        label: 'Rename',
+        key: 'Rename',
+        // handleClick: () => undefined,
+      },
+      {
+        label: 'Delete',
+        key: 'Delete',
+        // handleClick: () => undefined,
+      },
+    ],
+    []
+  );
+
+  //   右键显示菜单
+  const handleContextMenu = (event: MouseEvent, node: DataNode) => {
+    if (node) {
+      setIsOpenDropDown(true);
+    } else {
+      setIsOpenDropDown(false);
+    }
+    return node;
+  };
+
+  const treeRef = useRef<HTMLDivElement>(null);
+
+  const handleDocumentClick = () => {
+    setIsOpenDropDown(false);
+  };
+
+  const handleDocumentRightClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+
+    const antTreeListHolder = document.querySelector('.ant-tree-list-holder');
+    const isAntTreeListHolderChild = antTreeListHolder?.contains(target);
+    if (
+      target.className.indexOf('node') !== -1 ||
+      isAntTreeListHolderChild === true
+    ) {
+      setIsOpenDropDown(true);
+    } else {
+      setIsOpenDropDown(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('click', handleDocumentClick);
+    document.addEventListener('contextmenu', handleDocumentRightClick);
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+      document.removeEventListener('contextmenu', handleDocumentRightClick);
+    };
+  }, []);
+
+  // =========================================
+
   return (
     <div
       css={css`
@@ -390,6 +459,7 @@ export const SelectorTree = memo(() => {
       />
       {showMore && <PopMore />}
       <div
+        ref={treeRef}
         css={css`
           display: flex;
           flex: 1;
@@ -430,28 +500,47 @@ export const SelectorTree = memo(() => {
           }
         `}
       >
-        <DirectoryTree
-          defaultExpandAll
-          autoExpandParent
-          defaultExpandParent
-          selectedKeys={selectedKeysSwitch}
-          expandedKeys={expandKeysSwitch}
-          showIcon={false}
-          expandAction="doubleClick"
-          css={css`
-            display: flex;
-            flex: 1;
-            width: 100%;
-            background-color: #f5f5f7;
-
-            .ant-tree-list {
+        <Dropdown
+          menu={{ items: listItems }}
+          trigger={['contextMenu']}
+          open={isOpenDropDown}
+          destroyPopupOnHide
+        >
+          <DirectoryTree
+            defaultExpandAll
+            autoExpandParent
+            defaultExpandParent
+            selectedKeys={selectedKeysSwitch}
+            expandedKeys={expandKeysSwitch}
+            showIcon={false}
+            expandAction="doubleClick"
+            onRightClick={({ event, node }: any) => {
+              handleContextMenu(event, node);
+            }}
+            css={css`
+              display: flex;
               flex: 1;
-            }
-          `}
-          onSelect={onSelect}
-          onExpand={onExpand}
-          treeData={treeNodes}
-        />
+              width: 100%;
+              background-color: #f5f5f7;
+
+              .ant-tree-list {
+                flex: 1;
+              }
+              .ant-tree-node-content-wrapper {
+                flex: 1 !important;
+              }
+              .ant-tree-title {
+                div {
+                  justify-content: left;
+                  flex: 1;
+                }
+              }
+            `}
+            onSelect={onSelect}
+            onExpand={onExpand}
+            treeData={treeNodes}
+          />
+        </Dropdown>
       </div>
     </div>
   );
