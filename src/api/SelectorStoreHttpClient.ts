@@ -4,63 +4,75 @@ import { HttpClient } from './shared';
 
 export const selectors: SelectorStore[] = [
   {
-    key: 1,
+    key: 'aaaaaaaaaa',
     storeName: 'Store A',
     selectors: [
       {
-        key: 2,
+        key: '2',
         selectorName: 'Baidu_Input',
       },
       {
-        key: 3,
-        selectorName: 'submit_su',
+        key: '3',
+        selectorName: 'submit_su1',
+      },
+      {
+        key: '311',
+        selectorName: 'submit_su2',
+      },
+      {
+        key: '3at',
+        selectorName: 'submit_su3',
+      },
+      {
+        key: '1346',
+        selectorName: 'submit_su4',
       },
     ],
     folders: [
       {
-        key: 4,
+        key: 'c4',
         folderName: 'Folder A.4',
         selectors: [
           {
-            key: 5,
+            key: '2d5',
             selectorName: 'Google_c',
           },
         ],
       },
       {
-        key: 6,
+        key: '55',
         folderName: 'Folder A.6',
         folders: [
           {
-            key: 7,
+            key: '7',
             folderName: 'Folder A.6.7',
             selectors: [
               {
-                key: 8,
+                key: 'xx',
                 selectorName: 'Yahoo_IMG',
               },
               {
-                key: 9,
+                key: '9',
                 selectorName: 'Bing_Search',
               },
             ],
           },
           {
-            key: 10,
+            key: '10',
             folderName: 'Folder A.6.10',
             selectors: [
               {
-                key: 11,
+                key: '11',
                 selectorName: 'Google_a',
               },
             ],
             folders: [
               {
-                key: 12,
+                key: 'a',
                 folderName: 'Folder A.6.10.12',
                 selectors: [
                   {
-                    key: 13,
+                    key: 'c-aw',
                     selectorName: 'Google_b',
                   },
                 ],
@@ -72,14 +84,8 @@ export const selectors: SelectorStore[] = [
     ],
   },
   {
-    key: 14,
+    key: 'bbc',
     storeName: 'Store B',
-    selectors: [
-      {
-        key: 15,
-        selectorName: 'Google_Title',
-      },
-    ],
   },
 ];
 

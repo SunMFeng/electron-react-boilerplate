@@ -132,7 +132,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
     }
 
     return () => {
-      variableInputElement.removeEventListener('input', setTargetInputWidth);
+      variableInputElement?.removeEventListener('input', setTargetInputWidth);
     };
   }, [index, variableInputElement]);
 

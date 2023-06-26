@@ -1,19 +1,19 @@
 export interface Selector {
-  key: number;
+  key: string;
   locatorType?: 'image' | 'ui';
   selectorName: string;
-  targetSelector?: any;
+  targetSelector?: unknown;
 }
 
 export interface SelectorStoreFolder {
-  key: number;
+  key: string;
   folderName: string;
   folders?: SelectorStoreFolder[];
   selectors?: Selector[];
 }
 
 export interface SelectorStore {
-  key: number;
+  key: string;
   storeName: string;
   selectors?: Selector[];
   folders?: SelectorStoreFolder[];

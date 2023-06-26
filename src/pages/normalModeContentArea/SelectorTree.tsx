@@ -6,7 +6,6 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { ReactComponent as IconMore } from '@/assets/imgs/icon-more-normalmode.svg';
@@ -15,8 +14,7 @@ import { ReactComponent as IconCreatestore } from '@/assets/imgs/icon-createstor
 import { ReactComponent as IconStore } from '@/assets/imgs/icon-store.svg';
 import { ReactComponent as IconSelectorAddByClick } from '@/assets/imgs/icon-selector-addby-click.svg';
 import { ReactComponent as IconFolder } from '@/assets/imgs/icon-folder.svg';
-
-import type { DataNode, DirectoryTreeProps } from 'antd/es/tree';
+import type { DataNode, EventDataNode } from 'antd/es/tree';
 import Tree from 'antd/es/tree';
 import { uniqBy } from 'lodash-es';
 import { useSmartStepListStore } from '@/store/smartMode/stepList';
@@ -29,6 +27,17 @@ import Button from '../components/Button';
 import SvgIcon from '../components/SvgIcon';
 
 const { DirectoryTree } = Tree;
+
+type DirectoryTreeProps = React.ComponentProps<typeof DirectoryTree>;
+type EventProps = Pick<
+  DirectoryTreeProps,
+  'onSelect' | 'onRightClick' | 'onExpand'
+>;
+type SelectEvent = EventProps['onSelect'];
+type ExpandEvent = EventProps['onExpand'];
+type RightClickEvent = EventProps['onRightClick'];
+type Defined<T> = Exclude<T, undefined>;
+type MyDataNode = EventDataNode<DataNode>;
 
 /**
  * @function useSelectorTreeData: 总结转化为自定义化;
@@ -320,6 +329,10 @@ const findKeyBySelectorName = (
 export const SelectorTree = memo(() => {
   const smartMode = useModeSwitcherStore((state) => state.smartMode);
   const selectors = useSelectorStore((state) => state.selectors);
+  //   const setSelectorByIndex = useSelectorStore(
+  //     (state) => state.setSelectorByIndex
+  //   );
+  const deleteByIndex = useSelectorStore((state) => state.deleteByIndex);
   const currSelectedItem = useSmartStepListStore(
     (state) => state.currSelectedItem
   );
@@ -353,80 +366,136 @@ export const SelectorTree = memo(() => {
   }, [showMore]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onSelect: DirectoryTreeProps['onSelect'] = (keys, info) => {
+  const onSelect = useCallback<Defined<SelectEvent>>((keys, info) => {
     setSelectedKeys(keys);
-  };
-
+  }, []);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onExpand: DirectoryTreeProps['onExpand'] = (keys, info) => {
+  const onExpand = useCallback<Defined<ExpandEvent>>((keys, info) => {
     setExpandKeys(keys);
-  };
+  }, []);
 
   // ===================Treenode右键菜单自定义相关=====================
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isOpenDropDown, setIsOpenDropDown] = useState(false);
+  const [currRightClickingItem, setCurrRightClickingItem] = useState<
+    MyDataNode | undefined
+  >();
 
-  const listItems: MenuProps['items'] = useMemo(
+  console.log({ currRightClickingItem });
+
+  const listItemsForSelector: MenuProps['items'] = useMemo(
     () => [
       {
         label: 'Recapture',
-        key: 'Recapture',
+        key: 'recapture',
         // handleClick: () => undefined,
       },
       {
         label: 'Rename',
-        key: 'Rename',
+        key: 'rename',
         // handleClick: () => undefined,
       },
       {
         label: 'Delete',
-        key: 'Delete',
-        // handleClick: () => undefined,
+        key: 'delete',
       },
     ],
     []
   );
+  const listItemsForStore: MenuProps['items'] = useMemo(
+    () => [
+      {
+        label: 'New Folder',
+        key: 'newfolder',
+        // handleClick: () => undefined,
+      },
+      {
+        label: 'Rename',
+        key: 'rename',
+        // handleClick: () => undefined,
+      },
+      {
+        label: 'Delete',
+        key: 'delete',
+      },
+    ],
+    []
+  );
+  const itemsSwitcher = useMemo(() => {
+    if (currRightClickingItem && 'children' in currRightClickingItem) {
+      return listItemsForStore;
+    }
+    if (currRightClickingItem?.children?.length === 0) {
+      return listItemsForSelector;
+    }
+    return listItemsForSelector;
+  }, [currRightClickingItem, listItemsForSelector, listItemsForStore]);
 
-  //   右键显示菜单
-  const handleContextMenu = (event: MouseEvent, node: DataNode) => {
-    if (node) {
+  const onClickDropDownMenuItems = useCallback<Defined<MenuProps['onClick']>>(
+    ({ key }) => {
+      switch (key) {
+        case 'Delete': {
+          if (currRightClickingItem?.key) {
+            deleteByIndex(currRightClickingItem?.key.toString());
+          }
+          break;
+        }
+        // todo
+        default:
+          break;
+      }
+      return null;
+    },
+    [currRightClickingItem?.key, deleteByIndex]
+  );
+
+  const dropDownMenu = useMemo(() => {
+    return {
+      items: itemsSwitcher,
+      onClick: onClickDropDownMenuItems,
+    };
+  }, [itemsSwitcher, onClickDropDownMenuItems]);
+
+  //   右键显示菜单info
+  const handleContextMenu = useCallback<Defined<RightClickEvent>>((info) => {
+    if (info.node) {
       setIsOpenDropDown(true);
+      setCurrRightClickingItem(info.node);
     } else {
       setIsOpenDropDown(false);
+      setCurrRightClickingItem(undefined);
     }
-    return node;
-  };
+    return info.node;
+  }, []);
 
-  const treeRef = useRef<HTMLDivElement>(null);
-
-  const handleDocumentClick = () => {
+  const handleDocumentClick = useCallback(() => {
     setIsOpenDropDown(false);
-  };
-
-  const handleDocumentRightClick = (event: MouseEvent) => {
+  }, []);
+  const handleDocumentRightClick = useCallback((event: MouseEvent) => {
     const target = event.target as HTMLElement;
 
     const antTreeListHolder = document.querySelector('.ant-tree-list-holder');
     const isAntTreeListHolderChild = antTreeListHolder?.contains(target);
     if (
-      target.className.indexOf('node') !== -1 ||
+      (target?.className &&
+        typeof target.className === 'string' &&
+        target?.className?.indexOf('node') !== -1) ||
       isAntTreeListHolderChild === true
     ) {
       setIsOpenDropDown(true);
     } else {
       setIsOpenDropDown(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    document.addEventListener('click', handleDocumentClick);
-    document.addEventListener('contextmenu', handleDocumentRightClick);
+    document?.addEventListener('click', handleDocumentClick);
+    document?.addEventListener('contextmenu', handleDocumentRightClick);
     return () => {
-      document.removeEventListener('click', handleDocumentClick);
-      document.removeEventListener('contextmenu', handleDocumentRightClick);
+      document?.removeEventListener('click', handleDocumentClick);
+      document?.removeEventListener('contextmenu', handleDocumentRightClick);
     };
-  }, []);
+  }, [handleDocumentClick, handleDocumentRightClick]);
 
   // =========================================
 
@@ -459,7 +528,6 @@ export const SelectorTree = memo(() => {
       />
       {showMore && <PopMore />}
       <div
-        ref={treeRef}
         css={css`
           display: flex;
           flex: 1;
@@ -501,7 +569,7 @@ export const SelectorTree = memo(() => {
         `}
       >
         <Dropdown
-          menu={{ items: listItems }}
+          menu={dropDownMenu}
           trigger={['contextMenu']}
           open={isOpenDropDown}
           destroyPopupOnHide
@@ -514,9 +582,10 @@ export const SelectorTree = memo(() => {
             expandedKeys={expandKeysSwitch}
             showIcon={false}
             expandAction="doubleClick"
-            onRightClick={({ event, node }: any) => {
-              handleContextMenu(event, node);
-            }}
+            onRightClick={handleContextMenu}
+            onSelect={onSelect}
+            onExpand={onExpand}
+            treeData={treeNodes}
             css={css`
               display: flex;
               flex: 1;
@@ -536,9 +605,6 @@ export const SelectorTree = memo(() => {
                 }
               }
             `}
-            onSelect={onSelect}
-            onExpand={onExpand}
-            treeData={treeNodes}
           />
         </Dropdown>
       </div>
