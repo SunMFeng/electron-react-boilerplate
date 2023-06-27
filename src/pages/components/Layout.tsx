@@ -41,7 +41,7 @@ export const Layout = memo(() => {
         {smartMode ? (
           <>
             <SmartModeContentLayout />
-            {selectorPanelExpanded && <SelectorTree />}
+            <SelectorTree visible={selectorPanelExpanded} />
           </>
         ) : (
           <NormalModeContentLayout />

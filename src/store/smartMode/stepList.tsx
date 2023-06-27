@@ -25,12 +25,12 @@ export const useSmartStepListStore = create(
       {
         type: 'click',
         folderName: 'Baidu',
-        targetSelector: 'submit_su',
+        targetSelector: 'submit_su1',
       },
       {
         type: 'click',
         folderName: 'Google',
-        targetSelector: 'submit_su',
+        targetSelector: 'submit_su2',
       },
       {
         type: 'input',

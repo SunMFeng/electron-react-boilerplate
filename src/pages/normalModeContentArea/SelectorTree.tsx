@@ -184,14 +184,20 @@ export function useSelectorTreeData() {
     [getTitle]
   );
 
-  const init = useCallback(async () => {
-    const _selectors = await getSelectors();
-    return _selectors;
-  }, [getSelectors]);
+  //   const _init = useCallback(async () => {
+  //     const _selectors = await getSelectors();
+  //     return _selectors ?? [];
+  //   }, [getSelectors]);
 
   useEffect(() => {
-    init();
-  }, [init]);
+    const init = async () => {
+      const _selectors = await getSelectors();
+      return _selectors ?? [];
+    };
+    // eslint-disable-next-line promise/catch-or-return
+    init().then(() => console.log('initial selector data complete'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (selectors) {
@@ -326,7 +332,7 @@ const findKeyBySelectorName = (
   return res;
 };
 
-export const SelectorTree = memo(() => {
+export const SelectorTree = memo((props: { visible: boolean }) => {
   const smartMode = useModeSwitcherStore((state) => state.smartMode);
   const selectors = useSelectorStore((state) => state.selectors);
   //   const setSelectorByIndex = useSelectorStore(
@@ -388,12 +394,10 @@ export const SelectorTree = memo(() => {
       {
         label: 'Recapture',
         key: 'recapture',
-        // handleClick: () => undefined,
       },
       {
         label: 'Rename',
         key: 'rename',
-        // handleClick: () => undefined,
       },
       {
         label: 'Delete',
@@ -407,12 +411,10 @@ export const SelectorTree = memo(() => {
       {
         label: 'New Folder',
         key: 'newfolder',
-        // handleClick: () => undefined,
       },
       {
         label: 'Rename',
         key: 'rename',
-        // handleClick: () => undefined,
       },
       {
         label: 'Delete',
@@ -434,7 +436,7 @@ export const SelectorTree = memo(() => {
   const onClickDropDownMenuItems = useCallback<Defined<MenuProps['onClick']>>(
     ({ key }) => {
       switch (key) {
-        case 'Delete': {
+        case 'delete': {
           if (currRightClickingItem?.key) {
             deleteByIndex(currRightClickingItem?.key.toString());
           }
@@ -503,7 +505,7 @@ export const SelectorTree = memo(() => {
     <div
       css={css`
         position: relative;
-        display: flex;
+        display: ${props.visible ? 'flex' : 'none'};
         background-color: #f5f5f7;
         flex: 1;
         width: 100%;

@@ -2,12 +2,12 @@
 import { StepItem } from '@/models/StepList';
 import { css } from '@emotion/react';
 import {
-  Fragment,
   KeyboardEventHandler,
   memo,
   useCallback,
   useEffect,
   useMemo,
+  useState,
 } from 'react';
 import { ReactComponent as IconClick } from '@/assets/imgs/icon-click.svg';
 import { ReactComponent as IconDelete } from '@/assets/imgs/icon-delete.svg';
@@ -17,7 +17,7 @@ import SvgIcon from '@/pages/components/SvgIcon';
 import { Space } from 'antd';
 import Button from '@/pages/components/Button';
 import { useSmartStepListStore } from '@/store/smartMode/stepList';
-import { debounce } from 'lodash-es';
+import { debounce, isEqual } from 'lodash-es';
 
 interface StepItemContentProps {
   index: number;
@@ -25,7 +25,7 @@ interface StepItemContentProps {
 }
 
 export const StepItemContent = memo((props: StepItemContentProps) => {
-  const { index, item } = props;
+  const { index: indexProps, item: itemProps } = props;
   const stepItems = useSmartStepListStore((state) => state.stepItems);
   const currSelectedItem = useSmartStepListStore(
     (state) => state.currSelectedItem
@@ -37,6 +37,21 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
   const setCurrSelectedItem = useSmartStepListStore(
     (state) => state.setCurrSelectedItem
   );
+
+  const [item, setItem] = useState(itemProps);
+  const [index, setIndex] = useState(indexProps);
+
+  useEffect(() => {
+    if (!isEqual(itemProps, item)) {
+      setItem(itemProps);
+    }
+  }, [item, itemProps]);
+
+  useEffect(() => {
+    if (!isEqual(indexProps, index)) {
+      setIndex(indexProps);
+    }
+  }, [index, indexProps]);
 
   const _handleChangeVariableNameInput: React.ChangeEventHandler<HTMLInputElement> =
     useCallback(
@@ -54,7 +69,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
 
   const handleChangeVariableNameInput = debounce(
     _handleChangeVariableNameInput,
-    100
+    500
   );
 
   const _handleChangeSelectorNameInput: React.ChangeEventHandler<HTMLInputElement> =
@@ -73,7 +88,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
 
   const handleChangeSelectorNameInput = debounce(
     _handleChangeSelectorNameInput,
-    100
+    500
   );
 
   const handleClickLocate = useCallback(() => {
@@ -90,51 +105,74 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
   }, [index, setStepItems, stepItems]);
 
   useEffect(() => {
-    // todo: testing, rdy to remove
-    console.log('changed', { stepItems });
-  }, [stepItems]);
+    const selectorInputElement = document.getElementById(
+      `selector-editable-input-${index}`
+    ) as HTMLInputElement;
 
-  const selectorInputElement = document.getElementById(
-    `selector-editable-input-${index}`
-  ) as HTMLInputElement;
-
-  useEffect(() => {
     const setTargetInputWidth = () => {
       selectorInputElement.style.width = `${
         (selectorInputElement.value.length + 1) * 8
       }px`;
     };
+
     if (selectorInputElement) {
-      console.log(`found "input:selector"`);
       setTargetInputWidth();
-      selectorInputElement.addEventListener('input', setTargetInputWidth);
     }
-
-    return () => {
-      selectorInputElement?.removeEventListener('input', setTargetInputWidth);
-    };
-  }, [index, selectorInputElement]);
-
-  const variableInputElement = document.getElementById(
-    `variable-editable-input-${index}`
-  ) as HTMLInputElement;
+  }, [index]);
 
   useEffect(() => {
+    const variableInputElement = document.getElementById(
+      `variable-editable-input-${index}`
+    ) as HTMLInputElement;
     const setTargetInputWidth = () => {
       variableInputElement.style.width = `${
-        (variableInputElement.value.length + 1) * 8
+        ((variableInputElement?.value?.length ?? 0) + 1) * 8
       }px`;
     };
+
     if (variableInputElement) {
-      console.log(`found "input:variable"`);
       setTargetInputWidth();
-      variableInputElement.addEventListener('input', setTargetInputWidth);
+    }
+  }, [index]);
+
+  useEffect(() => {
+    const selectorInputElement = document.getElementById(
+      `selector-editable-input-${index}`
+    ) as HTMLInputElement;
+
+    const setTargetInputWidth = () => {
+      selectorInputElement.style.width = `${
+        (selectorInputElement.value.length + 1) * 8
+      }px`;
+    };
+
+    if (selectorInputElement && currSelectedItem?.index === index) {
+      selectorInputElement.addEventListener('blur', setTargetInputWidth);
     }
 
     return () => {
-      variableInputElement?.removeEventListener('input', setTargetInputWidth);
+      selectorInputElement?.removeEventListener('blur', setTargetInputWidth);
     };
-  }, [index, variableInputElement]);
+  }, [index, currSelectedItem]);
+
+  useEffect(() => {
+    const variableInputElement = document.getElementById(
+      `variable-editable-input-${index}`
+    ) as HTMLInputElement;
+    const setTargetInputWidth = () => {
+      variableInputElement.style.width = `${
+        ((variableInputElement?.value?.length ?? 0) + 1) * 8
+      }px`;
+    };
+
+    if (variableInputElement && currSelectedItem?.index === index) {
+      variableInputElement.addEventListener('blur', setTargetInputWidth);
+    }
+
+    return () => {
+      variableInputElement?.removeEventListener('blur', setTargetInputWidth);
+    };
+  }, [index, currSelectedItem]);
 
   const titleInfo = useMemo(() => {
     switch (item.type) {
@@ -195,7 +233,6 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
                 className="selector-name"
                 id={`selector-editable-input-${index}`}
                 defaultValue={item.targetSelector}
-                // value={item.variable}
                 onChange={handleChangeSelectorNameInput}
                 css={css`
                   flex: 1;
@@ -213,7 +250,13 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
 
               <SvgIcon SvgComponent={IconPicture} value={16} />
             </div>
-            <span>输入</span>
+            <span
+              css={css`
+                white-space: nowrap;
+              `}
+            >
+              输入
+            </span>
             <div
               css={css`
                 height: 16px;
@@ -221,7 +264,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
                 border: 1px solid #e2e3ed;
                 padding: 1px 8px;
                 flex: 0 0 auto;
-                max-width: 110px;
+                max-width: 85px;
                 display: flex;
                 background-color: #ffffff;
               `}
@@ -231,7 +274,6 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
                 className="variable-name"
                 id={`variable-editable-input-${index}`}
                 defaultValue={item.variable}
-                // value={item.variable}
                 onChange={handleChangeVariableNameInput}
                 css={css`
                   flex: 1;
@@ -288,17 +330,13 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
     [handleClickStepItem]
   );
 
-  const _key = useMemo(() => {
-    return Math.random() + index;
-  }, [index]);
-
   return (
     <div
-      key={_key}
+      key={index}
       onClick={handleClickStepItem}
       onKeyDown={handleKeyDown}
       role="button"
-      tabIndex={_key}
+      tabIndex={index}
       css={css`
         display: flex;
         flex-direction: column;

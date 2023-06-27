@@ -19,7 +19,7 @@ export const NormalModeContentLayout = memo(() => {
       `}
     >
       <SettingSelectArea />
-      <SelectorTree />
+      <SelectorTree visible />
     </div>
   );
 });

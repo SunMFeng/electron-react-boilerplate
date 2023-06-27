@@ -66,6 +66,34 @@ export const StepListContainer = memo(() => {
 
   const { steps } = useSmartModeStepList(stepItems);
 
+  const StepDom = useMemo(() => {
+    return steps.map((item, key) => {
+      const _key = Math.random() + key;
+      return (
+        <div
+          key={_key}
+          css={css`
+            display: flex;
+            flex: 1;
+            flex-direction: row;
+            div {
+              display: flex;
+            }
+            .step-item-icon {
+              flex: 0 0 auto;
+            }
+            .step-item-content {
+              flex: 1;
+            }
+          `}
+        >
+          <div className="step-item-icon">{item.icon}</div>
+          <div className="step-item-content">{item.content}</div>
+        </div>
+      );
+    });
+  }, [steps]);
+
   return (
     <div
       css={css`
@@ -86,31 +114,7 @@ export const StepListContainer = memo(() => {
       `}
     >
       <Space size={4} direction="vertical">
-        {steps.map((item, key) => {
-          const _key = Math.random() + key;
-          return (
-            <div
-              key={_key}
-              css={css`
-                display: flex;
-                flex: 1;
-                flex-direction: row;
-                div {
-                  display: flex;
-                }
-                .step-item-icon {
-                  flex: 0 0 auto;
-                }
-                .step-item-content {
-                  flex: 1;
-                }
-              `}
-            >
-              <div className="step-item-icon">{item.icon}</div>
-              <div className="step-item-content">{item.content}</div>
-            </div>
-          );
-        })}
+        {StepDom}
       </Space>
     </div>
   );
