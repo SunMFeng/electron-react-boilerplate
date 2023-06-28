@@ -1,19 +1,19 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import React, { Fragment, memo } from 'react';
+import React, { memo } from 'react';
 import { useModeSwitcherStore } from '@/store/modeSwitcher';
 import { AppHeader } from './AppHeader';
 import { ModeSwitcher } from './ModeSwitcher';
 import { NormalModeContentLayout } from '../normalModeContentArea/NormalModeContentLayout';
 import { AppFooter } from './AppFooter';
 import { SmartModeContentLayout } from '../smartModeContentArea/SmartModeContentLayout';
-import { SelectorTree } from '../normalModeContentArea/SelectorTree';
+import { useSelectorTreeData } from '../normalModeContentArea/SelectorTree';
 
 export const Layout = memo(() => {
   const smartMode = useModeSwitcherStore((state) => state.smartMode);
-  const selectorPanelExpanded = useModeSwitcherStore(
-    (state) => state.selectorPanelExpanded
-  );
+
+  const { treeNodes } = useSelectorTreeData();
+
   return (
     <div
       css={css`
@@ -39,12 +39,9 @@ export const Layout = memo(() => {
         `}
       >
         {smartMode ? (
-          <>
-            <SmartModeContentLayout />
-            <SelectorTree visible={selectorPanelExpanded} />
-          </>
+          <SmartModeContentLayout data={treeNodes} />
         ) : (
-          <NormalModeContentLayout />
+          <NormalModeContentLayout data={treeNodes} />
         )}
       </div>
       <AppFooter />

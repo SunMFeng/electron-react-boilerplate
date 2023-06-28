@@ -39,6 +39,11 @@ type RightClickEvent = EventProps['onRightClick'];
 type Defined<T> = Exclude<T, undefined>;
 type MyDataNode = EventDataNode<DataNode>;
 
+interface SelectorTreeProps {
+  visible: boolean;
+  data: DataNode[];
+}
+
 /**
  * @function useSelectorTreeData: 总结转化为自定义化;
  * @param selectors: api返回元数据(回显时 or etc.)
@@ -184,20 +189,14 @@ export function useSelectorTreeData() {
     [getTitle]
   );
 
-  //   const _init = useCallback(async () => {
-  //     const _selectors = await getSelectors();
-  //     return _selectors ?? [];
-  //   }, [getSelectors]);
+  const init = useCallback(async () => {
+    const _selectors = await getSelectors();
+    return _selectors ?? [];
+  }, [getSelectors]);
 
   useEffect(() => {
-    const init = async () => {
-      const _selectors = await getSelectors();
-      return _selectors ?? [];
-    };
-    // eslint-disable-next-line promise/catch-or-return
-    init().then(() => console.log('initial selector data complete'));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    init();
+  }, [init]);
 
   useEffect(() => {
     if (selectors) {
@@ -332,7 +331,9 @@ const findKeyBySelectorName = (
   return res;
 };
 
-export const SelectorTree = memo((props: { visible: boolean }) => {
+export const SelectorTree = memo((props: SelectorTreeProps) => {
+  const { data, visible } = props;
+
   const smartMode = useModeSwitcherStore((state) => state.smartMode);
   const selectors = useSelectorStore((state) => state.selectors);
   //   const setSelectorByIndex = useSelectorStore(
@@ -342,7 +343,6 @@ export const SelectorTree = memo((props: { visible: boolean }) => {
   const currSelectedItem = useSmartStepListStore(
     (state) => state.currSelectedItem
   );
-  const { treeNodes } = useSelectorTreeData();
 
   const [showMore, setShowMore] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<Key[]>([]);
@@ -505,7 +505,7 @@ export const SelectorTree = memo((props: { visible: boolean }) => {
     <div
       css={css`
         position: relative;
-        display: ${props.visible ? 'flex' : 'none'};
+        display: ${visible ? 'flex' : 'none'};
         background-color: #f5f5f7;
         flex: 1;
         width: 100%;
@@ -587,7 +587,7 @@ export const SelectorTree = memo((props: { visible: boolean }) => {
             onRightClick={handleContextMenu}
             onSelect={onSelect}
             onExpand={onExpand}
-            treeData={treeNodes}
+            treeData={data}
             css={css`
               display: flex;
               flex: 1;

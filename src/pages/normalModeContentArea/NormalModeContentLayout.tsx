@@ -1,10 +1,12 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import React, { memo } from 'react';
+import { memo } from 'react';
+import { DataNode } from 'antd/es/tree';
 import { SettingSelectArea } from './SettingSelectArea';
 import { SelectorTree } from './SelectorTree';
 
-export const NormalModeContentLayout = memo(() => {
+export const NormalModeContentLayout = memo((props: { data: DataNode[] }) => {
+  const { data } = props;
   return (
     <div
       css={css`
@@ -19,7 +21,7 @@ export const NormalModeContentLayout = memo(() => {
       `}
     >
       <SettingSelectArea />
-      <SelectorTree visible />
+      <SelectorTree visible data={data} />
     </div>
   );
 });
