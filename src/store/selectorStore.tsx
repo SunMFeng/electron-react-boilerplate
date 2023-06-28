@@ -3,29 +3,98 @@ import {
   SelectorStore,
   SelectorStoreFolder,
 } from '@/models/SelectorStore';
+import type { DataNode, EventDataNode } from 'antd/es/tree';
 import { SelectorStoreHttpService } from '@/service/SelectorStoreHttpService';
+import { produce } from 'immer';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 
+export type DropDownMenuAction = 'rename' | 'recapture' | undefined;
+
 export interface SelectorStoreState {
   selectors: SelectorStore[];
+  currRightClickingItem: EventDataNode<DataNode> | undefined;
+  currDropDownMenuAction: DropDownMenuAction;
 }
 export interface SelectorStoreAction {
   getSelectors: () => Promise<SelectorStore[] | undefined>;
   setSelectors: (selectors: SelectorStore[]) => void;
-  setSelectorByIndex: (payload: { index: number; item: SelectorStore }) => void;
+  setCurrRightClickingItem: (item: EventDataNode<DataNode> | undefined) => void;
+  setCurrDropDownMenuAction: (action: DropDownMenuAction) => void;
+  setNameByIndex: (payload: { index: string; name: string }) => void;
   deleteByIndex: (index: string) => void;
 }
 
 export const useSelectorStore = create(
   immer<SelectorStoreState & SelectorStoreAction>((set) => ({
     selectors: [],
+    currRightClickingItem: undefined,
+    currDropDownMenuAction: undefined,
     setSelectors: (selectors: SelectorStore[]) => {
       set({ selectors });
     },
-    setSelectorByIndex: (payload: { index: number; item: SelectorStore }) => {
+    setCurrRightClickingItem: (item: EventDataNode<DataNode> | undefined) => {
+      set({ currRightClickingItem: item });
+    },
+    setCurrDropDownMenuAction: (action: DropDownMenuAction) => {
+      set({ currDropDownMenuAction: action });
+    },
+    setNameByIndex: (payload: { index: string; name: string }) => {
+      const { index, name } = payload;
+      function updateNodeByKey(
+        selectors: SelectorStore[],
+        key: string,
+        callback: (node: Selector | SelectorStoreFolder | SelectorStore) => void
+      ) {
+        return produce(selectors, (draft) => {
+          const findNode = (
+            node: Selector | SelectorStoreFolder | SelectorStore
+          ) => {
+            if (node.key === key) {
+              callback(node);
+            } else {
+              if ('selectors' in node) {
+                if (node.selectors && Array.isArray(node.selectors)) {
+                  node.selectors.forEach((selector: Selector) => {
+                    if (selector.key === key) {
+                      callback(selector);
+                    }
+                  });
+                }
+              }
+              if ('folders' in node) {
+                if (node.folders && Array.isArray(node.folders)) {
+                  node.folders.forEach((folder: SelectorStoreFolder) => {
+                    findNode(folder);
+                  });
+                }
+              }
+            }
+          };
+
+          draft.forEach((store) => {
+            findNode(store);
+          });
+        });
+      }
+
       set((state) => {
-        state.selectors[payload.index] = payload.item;
+        // state.selectors[payload.index] = payload.item;
+        const updatedSelectors = updateNodeByKey(
+          state.selectors,
+          index,
+          (node) => {
+            if ('folderName' in node) {
+              node.folderName = name;
+            } else if ('selectorName' in node) {
+              node.selectorName = name;
+            } else if ('storeName' in node) {
+              node.storeName = name;
+            }
+          }
+        );
+
+        state.selectors = updatedSelectors;
       });
     },
     deleteByIndex: (index: string) => {

@@ -14,7 +14,7 @@ import { ReactComponent as IconCreatestore } from '@/assets/imgs/icon-createstor
 import { ReactComponent as IconStore } from '@/assets/imgs/icon-store.svg';
 import { ReactComponent as IconSelectorAddByClick } from '@/assets/imgs/icon-selector-addby-click.svg';
 import { ReactComponent as IconFolder } from '@/assets/imgs/icon-folder.svg';
-import type { DataNode, EventDataNode } from 'antd/es/tree';
+import type { DataNode } from 'antd/es/tree';
 import Tree from 'antd/es/tree';
 import { uniqBy } from 'lodash-es';
 import { useSmartStepListStore } from '@/store/smartMode/stepList';
@@ -37,12 +37,40 @@ type SelectEvent = EventProps['onSelect'];
 type ExpandEvent = EventProps['onExpand'];
 type RightClickEvent = EventProps['onRightClick'];
 type Defined<T> = Exclude<T, undefined>;
-type MyDataNode = EventDataNode<DataNode>;
+// type MyDataNode = EventDataNode<DataNode>;
 
 interface SelectorTreeProps {
   visible: boolean;
   data: DataNode[];
 }
+
+const NameChangeInput = React.memo(function NameChangeInputContext(props: {
+  index: string;
+  defaultValue: string;
+  onChange: React.ChangeEventHandler<HTMLInputElement>;
+  onKeyDown: React.KeyboardEventHandler<HTMLInputElement>;
+}) {
+  const { index, defaultValue, onChange, onKeyDown } = props;
+  return (
+    <input
+      type="text"
+      id={`input-name-editing-${index}`}
+      defaultValue={defaultValue}
+      onChange={onChange}
+      onKeyDown={onKeyDown}
+      css={css`
+        flex: 1;
+        width: auto;
+        box-sizing: border-box;
+        min-width: 10px;
+        border: 0;
+        :focus {
+          outline: 0;
+        }
+      `}
+    />
+  );
+});
 
 /**
  * @function useSelectorTreeData: 总结转化为自定义化;
@@ -52,9 +80,52 @@ interface SelectorTreeProps {
  */
 export function useSelectorTreeData() {
   const selectors = useSelectorStore((state) => state.selectors);
+  const currRightClickingItem = useSelectorStore(
+    (state) => state.currRightClickingItem
+  );
+  const currDropDownMenuAction = useSelectorStore(
+    (state) => state.currDropDownMenuAction
+  );
   const getSelectors = useSelectorStore((state) => state.getSelectors);
+  const setNameByIndex = useSelectorStore((state) => state.setNameByIndex);
+  const setCurrDropDownMenuAction = useSelectorStore(
+    (state) => state.setCurrDropDownMenuAction
+  );
 
   const [treeNodes, setTreeNodes] = useState<DataNode[]>([]);
+
+  const [newName, setNewName] = useState<string>();
+
+  const handleChangeNameInput: React.ChangeEventHandler<HTMLInputElement> =
+    useCallback(
+      (e) => {
+        if (currDropDownMenuAction === 'rename' && e.target?.value) {
+          setNewName(e.target?.value);
+        }
+      },
+      [currDropDownMenuAction]
+    );
+  const handleChangeNameInputKeyDown: React.KeyboardEventHandler<HTMLInputElement> =
+    useCallback(
+      (e) => {
+        if (currRightClickingItem && e.key === 'Enter') {
+          if (newName) {
+            setNameByIndex({
+              index: currRightClickingItem.key.toString(),
+              name: newName,
+            });
+            setNewName(undefined);
+          }
+          setCurrDropDownMenuAction(undefined);
+        }
+      },
+      [
+        currRightClickingItem,
+        newName,
+        setCurrDropDownMenuAction,
+        setNameByIndex,
+      ]
+    );
 
   const getTitle = useCallback(
     (selector: SelectorStore | SelectorStoreFolder): React.ReactNode => {
@@ -78,7 +149,17 @@ export function useSelectorTreeData() {
               `}
             />
 
-            {selector.storeName}
+            {currRightClickingItem?.key === selector.key &&
+            currDropDownMenuAction === 'rename' ? (
+              <NameChangeInput
+                index={currRightClickingItem?.key}
+                defaultValue={selector.storeName}
+                onChange={handleChangeNameInput}
+                onKeyDown={handleChangeNameInputKeyDown}
+              />
+            ) : (
+              selector.storeName
+            )}
           </div>
         );
       }
@@ -102,7 +183,17 @@ export function useSelectorTreeData() {
               `}
             />
 
-            {selector.folderName}
+            {currRightClickingItem?.key === selector.key &&
+            currDropDownMenuAction === 'rename' ? (
+              <NameChangeInput
+                index={currRightClickingItem?.key}
+                defaultValue={selector.folderName}
+                onChange={handleChangeNameInput}
+                onKeyDown={handleChangeNameInputKeyDown}
+              />
+            ) : (
+              selector.folderName
+            )}
           </div>
         );
       }
@@ -124,12 +215,16 @@ export function useSelectorTreeData() {
               fill: #ffffff;
             `}
           />
-
-          {`Unknown-${Math.random()}`}
+          Unknown
         </div>
       );
     },
-    []
+    [
+      currDropDownMenuAction,
+      currRightClickingItem?.key,
+      handleChangeNameInput,
+      handleChangeNameInputKeyDown,
+    ]
   );
 
   const solveTreeNodes = useCallback(
@@ -164,7 +259,19 @@ export function useSelectorTreeData() {
                     `}
                   />
 
-                  {item.selectorName}
+                  {/* {item.selectorName} */}
+
+                  {currRightClickingItem?.key === item.key &&
+                  currDropDownMenuAction === 'rename' ? (
+                    <NameChangeInput
+                      index={currRightClickingItem?.key}
+                      defaultValue={item.selectorName}
+                      onChange={handleChangeNameInput}
+                      onKeyDown={handleChangeNameInputKeyDown}
+                    />
+                  ) : (
+                    item.selectorName
+                  )}
                 </div>
               ),
             }));
@@ -186,7 +293,13 @@ export function useSelectorTreeData() {
       }
       return [];
     },
-    [getTitle]
+    [
+      currDropDownMenuAction,
+      currRightClickingItem?.key,
+      getTitle,
+      handleChangeNameInput,
+      handleChangeNameInputKeyDown,
+    ]
   );
 
   const init = useCallback(async () => {
@@ -258,7 +371,7 @@ const PopMore = memo(() => {
             item.action();
           }
         };
-        const _key = Math.random() + key;
+        const _key = key;
         return (
           <div
             key={_key}
@@ -336,9 +449,6 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
 
   const smartMode = useModeSwitcherStore((state) => state.smartMode);
   const selectors = useSelectorStore((state) => state.selectors);
-  //   const setSelectorByIndex = useSelectorStore(
-  //     (state) => state.setSelectorByIndex
-  //   );
   const deleteByIndex = useSelectorStore((state) => state.deleteByIndex);
   const currSelectedItem = useSmartStepListStore(
     (state) => state.currSelectedItem
@@ -383,11 +493,18 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
   // ===================Treenode右键菜单自定义相关=====================
 
   const [isOpenDropDown, setIsOpenDropDown] = useState(false);
-  const [currRightClickingItem, setCurrRightClickingItem] = useState<
-    MyDataNode | undefined
-  >();
-
-  console.log({ currRightClickingItem });
+  const currRightClickingItem = useSelectorStore(
+    (state) => state.currRightClickingItem
+  );
+  const setCurrRightClickingItem = useSelectorStore(
+    (state) => state.setCurrRightClickingItem
+  );
+  //   const currDropDownMenuAction = useSelectorStore(
+  //     (state) => state.currDropDownMenuAction
+  //   );
+  const setCurrDropDownMenuAction = useSelectorStore(
+    (state) => state.setCurrDropDownMenuAction
+  );
 
   const listItemsForSelector: MenuProps['items'] = useMemo(
     () => [
@@ -435,20 +552,31 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
 
   const onClickDropDownMenuItems = useCallback<Defined<MenuProps['onClick']>>(
     ({ key }) => {
-      switch (key) {
-        case 'delete': {
-          if (currRightClickingItem?.key) {
+      if (currRightClickingItem?.key) {
+        switch (key) {
+          case 'delete': {
             deleteByIndex(currRightClickingItem?.key.toString());
+
+            break;
           }
-          break;
+          case 'rename': {
+            setCurrDropDownMenuAction('rename');
+            break;
+          }
+          case 'newfolder': {
+            break;
+          }
+          case 'recapture': {
+            // todo
+            break;
+          }
+          default:
+            break;
         }
-        // todo
-        default:
-          break;
       }
       return null;
     },
-    [currRightClickingItem?.key, deleteByIndex]
+    [currRightClickingItem?.key, deleteByIndex, setCurrDropDownMenuAction]
   );
 
   const dropDownMenu = useMemo(() => {
@@ -459,16 +587,19 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
   }, [itemsSwitcher, onClickDropDownMenuItems]);
 
   //   右键显示菜单info
-  const handleContextMenu = useCallback<Defined<RightClickEvent>>((info) => {
-    if (info.node) {
-      setIsOpenDropDown(true);
-      setCurrRightClickingItem(info.node);
-    } else {
-      setIsOpenDropDown(false);
-      setCurrRightClickingItem(undefined);
-    }
-    return info.node;
-  }, []);
+  const handleContextMenu = useCallback<Defined<RightClickEvent>>(
+    (info) => {
+      if (info.node) {
+        setIsOpenDropDown(true);
+        setCurrRightClickingItem(info.node);
+      } else {
+        setIsOpenDropDown(false);
+        setCurrRightClickingItem(undefined);
+      }
+      return info.node;
+    },
+    [setCurrRightClickingItem]
+  );
 
   const handleDocumentClick = useCallback(() => {
     setIsOpenDropDown(false);

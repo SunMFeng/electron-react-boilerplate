@@ -68,7 +68,7 @@ export const StepListContainer = memo(() => {
 
   const StepDom = useMemo(() => {
     return steps.map((item, key) => {
-      const _key = Math.random() + key;
+      const _key = key;
       return (
         <div
           key={_key}

@@ -69,7 +69,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
 
   const handleChangeVariableNameInput = debounce(
     _handleChangeVariableNameInput,
-    500
+    100
   );
 
   const _handleChangeSelectorNameInput: React.ChangeEventHandler<HTMLInputElement> =
@@ -88,7 +88,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
 
   const handleChangeSelectorNameInput = debounce(
     _handleChangeSelectorNameInput,
-    500
+    100
   );
 
   const handleClickLocate = useCallback(() => {
@@ -111,7 +111,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
 
     const setTargetInputWidth = () => {
       selectorInputElement.style.width = `${
-        (selectorInputElement.value.length + 1) * 8
+        selectorInputElement.value.length * 8
       }px`;
     };
 
@@ -126,7 +126,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
     ) as HTMLInputElement;
     const setTargetInputWidth = () => {
       variableInputElement.style.width = `${
-        ((variableInputElement?.value?.length ?? 0) + 1) * 8
+        (variableInputElement?.value?.length ?? 0) * 8
       }px`;
     };
 
