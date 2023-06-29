@@ -23,6 +23,7 @@ import { SelectorStore, SelectorStoreFolder } from '@/models/SelectorStore';
 import { useSelectorStore } from '@/store/selectorStore';
 import { useModeSwitcherStore } from '@/store/modeSwitcher';
 import { Dropdown, MenuProps } from 'antd';
+import { StepItem } from '@/models/StepList';
 import Button from '../components/Button';
 import SvgIcon from '../components/SvgIcon';
 
@@ -422,22 +423,33 @@ const PopMore = memo(() => {
   );
 });
 
-const findKeyBySelectorName = (
+export const findKeyBySelectorName = (
   nodes: SelectorStore[] | SelectorStoreFolder[],
-  selectorName: string
+  info: StepItem
 ): Key[] => {
   const res: Key[] = []; // 新增数组 res 保存结果
   nodes.forEach((node) => {
     if (node.selectors) {
       const selectorNode = node.selectors.find(
-        (selector) => selector.selectorName === selectorName
+        (selector) => selector.selectorName === info?.targetSelector
       );
       if (selectorNode) {
-        res.push(selectorNode.key);
+        if ('folderName' in info) {
+          if ('folderName' in node && node.folderName === info.folderName) {
+            res.push(selectorNode.key);
+          } else if (
+            'storeName' in node &&
+            node.storeName === info.folderName
+          ) {
+            res.push(selectorNode.key);
+          }
+        } else {
+          res.push(selectorNode.key);
+        }
       }
     }
     if (node.folders) {
-      const keys = findKeyBySelectorName(node.folders, selectorName);
+      const keys = findKeyBySelectorName(node.folders, info);
       res.push(...keys); // 使用展开语法添加 keys 数组元素到 res 中
     }
   });
@@ -459,16 +471,16 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
   const [expandKeys, setExpandKeys] = useState<Key[]>(selectedKeys);
 
   const selectedKeysSwitch = useMemo(() => {
-    return smartMode
-      ? findKeyBySelectorName(selectors, currSelectedItem?.targetSelector)
+    return smartMode && currSelectedItem
+      ? findKeyBySelectorName(selectors, currSelectedItem)
       : selectedKeys;
-  }, [currSelectedItem?.targetSelector, selectedKeys, selectors, smartMode]);
+  }, [currSelectedItem, selectedKeys, selectors, smartMode]);
 
   const expandKeysSwitch = useMemo(() => {
-    return smartMode
-      ? findKeyBySelectorName(selectors, currSelectedItem?.targetSelector)
+    return smartMode && currSelectedItem
+      ? findKeyBySelectorName(selectors, currSelectedItem)
       : expandKeys;
-  }, [currSelectedItem?.targetSelector, expandKeys, selectors, smartMode]);
+  }, [currSelectedItem, expandKeys, selectors, smartMode]);
 
   useEffect(() => {
     if (smartMode) {
@@ -499,9 +511,6 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
   const setCurrRightClickingItem = useSelectorStore(
     (state) => state.setCurrRightClickingItem
   );
-  //   const currDropDownMenuAction = useSelectorStore(
-  //     (state) => state.currDropDownMenuAction
-  //   );
   const setCurrDropDownMenuAction = useSelectorStore(
     (state) => state.setCurrDropDownMenuAction
   );
@@ -744,3 +753,5 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
     </div>
   );
 });
+
+export default SelectorTree;

@@ -10,7 +10,7 @@ import { immer } from 'zustand/middleware/immer';
 type State = {
   // todos: Record<string, Todo>
   stepItems: StepItem[];
-  currSelectedItem: (StepItem & { index: number }) | null;
+  currSelectedItem: (StepItem & { index?: number }) | null;
 };
 
 type Actions = {
@@ -29,7 +29,7 @@ export const useSmartStepListStore = create(
       },
       {
         type: 'click',
-        folderName: 'Google',
+        folderName: 'Store A',
         targetSelector: 'submit_su2',
       },
       {

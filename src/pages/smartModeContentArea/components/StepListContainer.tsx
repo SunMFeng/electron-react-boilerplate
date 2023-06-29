@@ -11,6 +11,7 @@ export function useSmartModeStepList(items: StepItem[]) {
     return items.map((item, index) => {
       return {
         icon: (
+          // Step序号
           <div
             css={css`
               width: 16px;
@@ -59,7 +60,7 @@ export function useSmartModeStepList(items: StepItem[]) {
 }
 
 export const StepListContainer = memo(() => {
-  const stepItems = useSmartStepListStore((state) => state.stepItems);
+  const stepItems = useSmartStepListStore((state) => state.stepItems); // TODO：现在stepItems与selectors的数据来源是相互独立的，但理论上stepItems[x]中的 folderName与targetSelector应和selectors中的数据存在某种联动，达成修改后会相互联动修改；
   //   const setStepItems = useSmartStepListStore(
   //     (state) => state.setStepItems
   //   );

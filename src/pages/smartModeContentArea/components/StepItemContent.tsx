@@ -18,14 +18,17 @@ import { Space } from 'antd';
 import Button from '@/pages/components/Button';
 import { useSmartStepListStore } from '@/store/smartMode/stepList';
 import { debounce, isEqual } from 'lodash-es';
+import { findKeyBySelectorName } from '@/pages/normalModeContentArea/SelectorTree';
+import { useSelectorStore } from '@/store/selectorStore';
 
 interface StepItemContentProps {
-  index: number;
+  index: number; // StepItem序列顺序号;
   item: StepItem;
 }
 
 export const StepItemContent = memo((props: StepItemContentProps) => {
   const { index: indexProps, item: itemProps } = props;
+  const selectors = useSelectorStore((state) => state.selectors);
   const stepItems = useSmartStepListStore((state) => state.stepItems);
   const currSelectedItem = useSmartStepListStore(
     (state) => state.currSelectedItem
@@ -37,6 +40,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
   const setCurrSelectedItem = useSmartStepListStore(
     (state) => state.setCurrSelectedItem
   );
+  const setNameByIndex = useSelectorStore((state) => state.setNameByIndex);
 
   const [item, setItem] = useState(itemProps);
   const [index, setIndex] = useState(indexProps);
@@ -66,15 +70,29 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
       },
       [index, item, setStepItemByIndex]
     );
-
   const handleChangeVariableNameInput = debounce(
     _handleChangeVariableNameInput,
     100
   );
 
+  const setNewSelectorNameInStepItem = useCallback(
+    (newName: string) => {
+      if (currSelectedItem) {
+        const key = findKeyBySelectorName(selectors, currSelectedItem)?.[0];
+
+        if (key) {
+          setNameByIndex({ index: key.toString(), name: newName });
+        }
+      }
+    },
+    [currSelectedItem, selectors, setNameByIndex]
+  );
+
   const _handleChangeSelectorNameInput: React.ChangeEventHandler<HTMLInputElement> =
     useCallback(
       (e) => {
+        setNewSelectorNameInStepItem(e.target.value);
+
         setStepItemByIndex({
           index,
           item: {
@@ -83,9 +101,8 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
           },
         });
       },
-      [index, item, setStepItemByIndex]
+      [index, item, setNewSelectorNameInStepItem, setStepItemByIndex]
     );
-
   const handleChangeSelectorNameInput = debounce(
     _handleChangeSelectorNameInput,
     100
@@ -142,7 +159,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
 
     const setTargetInputWidth = () => {
       selectorInputElement.style.width = `${
-        (selectorInputElement.value.length + 1) * 8
+        selectorInputElement.value.length * 8
       }px`;
     };
 
@@ -161,7 +178,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
     ) as HTMLInputElement;
     const setTargetInputWidth = () => {
       variableInputElement.style.width = `${
-        ((variableInputElement?.value?.length ?? 0) + 1) * 8
+        (variableInputElement?.value?.length ?? 0) * 8
       }px`;
     };
 
