@@ -117,7 +117,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
     const _items = [...stepItems];
 
     _items.splice(index, 1);
-
+    console.log({ _items });
     setStepItems(_items);
   }, [index, setStepItems, stepItems]);
 
@@ -246,6 +246,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
               `}
             >
               <input
+                key={`selector-name-area: ${index}-${item.targetSelector}`}
                 type="text"
                 className="selector-name"
                 id={`selector-editable-input-${index}`}
@@ -287,6 +288,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
               `}
             >
               <input
+                key={`variable-name-area: ${index}-${item.variable}`}
                 type="text"
                 className="variable-name"
                 id={`variable-editable-input-${index}`}
@@ -336,6 +338,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
 
   const handleClickStepItem = useCallback(() => {
     setCurrSelectedItem({ ...stepItems[index], index });
+    console.log('handleClickStepItem', stepItems[index]);
   }, [index, setCurrSelectedItem, stepItems]);
 
   const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = useCallback(

@@ -54,6 +54,7 @@ const NameChangeInput = React.memo(function NameChangeInputContext(props: {
   const { index, defaultValue, onChange, onKeyDown } = props;
   return (
     <input
+      key={`input-name-editing-area: ${index}-${defaultValue}`}
       type="text"
       id={`input-name-editing-${index}`}
       defaultValue={defaultValue}
