@@ -8,6 +8,7 @@ import { SelectorStoreHttpService } from '@/service/SelectorStoreHttpService';
 import { produce } from 'immer';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
+import { guid } from '@/utils/guid2';
 
 export type DropDownMenuAction = 'rename' | 'recapture' | undefined;
 
@@ -137,13 +138,6 @@ export const useSelectorStore = create(
         });
       }
 
-      function guid2() {
-        function S4() {
-          return ((1 + Math.random()) * 0x10000 || 0).toString(16).substring(1);
-        }
-        return `${S4() + S4()}-${S4()}-${S4()}-${S4()}-${S4()}${S4()}${S4()}`;
-      }
-
       set((state) => {
         // state.selectors[payload.index] = payload.item;
         const updatedSelectors = state.currRightClickingItem?.key.toString()
@@ -151,7 +145,7 @@ export const useSelectorStore = create(
               state.selectors,
               state.currRightClickingItem?.key.toString(),
               (node) => {
-                const uuid = guid2();
+                const uuid = guid();
                 if ('folderName' in node) {
                   if (node?.folders) {
                     node?.folders?.push({

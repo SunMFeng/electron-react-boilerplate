@@ -3,5 +3,5 @@
   "semi": false,
   "trailingComma": "es5",
   "jsxSingleQuote": true,
-  "endofline": "lf"
+  "endOfLine": "auto"
 }
