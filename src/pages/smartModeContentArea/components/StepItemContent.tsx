@@ -226,7 +226,25 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
                 background-color: #ffffff;
               `}
             >
-              <span className="selector-name">{item.targetSelector}</span>
+              {/* <span className="selector-name">{item.targetSelector}</span> */}
+              <input
+                key={`selector-name-area: ${index}`}
+                type="text"
+                className="selector-name"
+                id={`selector-editable-input-${index}`}
+                defaultValue={item.targetSelector}
+                onChange={handleChangeSelectorNameInput}
+                css={css`
+                  flex: 1;
+                  width: auto;
+                  box-sizing: border-box;
+                  min-width: 10px;
+                  border: 0;
+                  :focus {
+                    outline: 0;
+                  }
+                `}
+              />
               <SvgIcon SvgComponent={IconPicture} value={16} />
             </div>
           </>
@@ -246,7 +264,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
               `}
             >
               <input
-                key={`selector-name-area: ${index}-${item.targetSelector}`}
+                key={`selector-name-area: ${index}`}
                 type="text"
                 className="selector-name"
                 id={`selector-editable-input-${index}`}
@@ -288,7 +306,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
               `}
             >
               <input
-                key={`variable-name-area: ${index}-${item.variable}`}
+                key={`variable-name-area: ${index}`}
                 type="text"
                 className="variable-name"
                 id={`variable-editable-input-${index}`}
