@@ -60,6 +60,8 @@ const NameChangeInput = React.memo(function NameChangeInputContext(props: {
       defaultValue={defaultValue}
       onChange={onChange}
       onKeyDown={onKeyDown}
+      // eslint-disable-next-line jsx-a11y/no-autofocus
+      autoFocus // 由于只会在出现rename时获得autofocus所以应该不会影响用户操作性
       css={css`
         flex: 1;
         width: auto;
@@ -194,7 +196,16 @@ export function useSelectorTreeData() {
                 onKeyDown={handleChangeNameInputKeyDown}
               />
             ) : (
-              selector.folderName
+              <span
+                css={css`
+                  max-width: 150px;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                  overflow: hidden;
+                `}
+              >
+                {selector.folderName}
+              </span>
             )}
           </div>
         );
@@ -515,6 +526,7 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
   const setCurrDropDownMenuAction = useSelectorStore(
     (state) => state.setCurrDropDownMenuAction
   );
+  const createNewFolder = useSelectorStore((state) => state.createNewFolder);
 
   const listItemsForSelector: MenuProps['items'] = useMemo(
     () => [
@@ -574,6 +586,11 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
             break;
           }
           case 'newfolder': {
+            const returnKey = createNewFolder();
+            if (returnKey) {
+              setSelectedKeys([...selectedKeys, returnKey]);
+              setExpandKeys([...selectedKeys, returnKey]);
+            }
             break;
           }
           case 'recapture': {
@@ -586,7 +603,13 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
       }
       return null;
     },
-    [currRightClickingItem?.key, deleteByIndex, setCurrDropDownMenuAction]
+    [
+      createNewFolder,
+      currRightClickingItem?.key,
+      deleteByIndex,
+      selectedKeys,
+      setCurrDropDownMenuAction,
+    ]
   );
 
   const dropDownMenu = useMemo(() => {

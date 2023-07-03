@@ -22,6 +22,7 @@ export interface SelectorStoreAction {
   setCurrRightClickingItem: (item: EventDataNode<DataNode> | undefined) => void;
   setCurrDropDownMenuAction: (action: DropDownMenuAction) => void;
   setNameByIndex: (payload: { index: string; name: string }) => void;
+  createNewFolder: () => string | null;
   deleteByIndex: (index: string) => void;
 }
 
@@ -96,6 +97,101 @@ export const useSelectorStore = create(
 
         state.selectors = updatedSelectors;
       });
+    },
+    createNewFolder: () => {
+      let returnKey = null;
+      function updateNodeByKey(
+        selectors: SelectorStore[],
+        key: string,
+        callback: (node: Selector | SelectorStoreFolder | SelectorStore) => void
+      ) {
+        return produce(selectors, (draft) => {
+          const findNode = (
+            node: Selector | SelectorStoreFolder | SelectorStore
+          ) => {
+            if (node.key === key) {
+              callback(node);
+            } else {
+              if ('selectors' in node) {
+                if (node.selectors && Array.isArray(node.selectors)) {
+                  node.selectors.forEach((selector: Selector) => {
+                    if (selector.key === key) {
+                      callback(selector);
+                    }
+                  });
+                }
+              }
+              if ('folders' in node) {
+                if (node.folders && Array.isArray(node.folders)) {
+                  node.folders.forEach((folder: SelectorStoreFolder) => {
+                    findNode(folder);
+                  });
+                }
+              }
+            }
+          };
+
+          draft.forEach((store) => {
+            findNode(store);
+          });
+        });
+      }
+
+      function guid2() {
+        function S4() {
+          return ((1 + Math.random()) * 0x10000 || 0).toString(16).substring(1);
+        }
+        return `${S4() + S4()}-${S4()}-${S4()}-${S4()}-${S4()}${S4()}${S4()}`;
+      }
+
+      set((state) => {
+        // state.selectors[payload.index] = payload.item;
+        const updatedSelectors = state.currRightClickingItem?.key.toString()
+          ? updateNodeByKey(
+              state.selectors,
+              state.currRightClickingItem?.key.toString(),
+              (node) => {
+                const uuid = guid2();
+                if ('folderName' in node) {
+                  if (node?.folders) {
+                    node?.folders?.push({
+                      key: uuid,
+                      folderName: `NewFolder-${uuid}`,
+                    });
+                  } else {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    node!.folders = [
+                      {
+                        key: uuid,
+                        folderName: `NewFolder-${uuid}`,
+                      },
+                    ];
+                  }
+                  returnKey = uuid;
+                } else if ('storeName' in node) {
+                  if (node?.folders) {
+                    node?.folders?.push({
+                      key: uuid,
+                      folderName: `NewFolder-${uuid}`,
+                    });
+                  } else {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    node!.folders = [
+                      {
+                        key: uuid,
+                        folderName: `NewFolder-${uuid}`,
+                      },
+                    ];
+                  }
+                  returnKey = uuid;
+                }
+              }
+            )
+          : state.selectors;
+
+        state.selectors = updatedSelectors;
+      });
+      return returnKey;
     },
     deleteByIndex: (index: string) => {
       function removeKeyFromSelectors(
