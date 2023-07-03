@@ -1,14 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { StepItem } from '@/models/StepList';
 import { css } from '@emotion/react';
-import {
-  KeyboardEventHandler,
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ReactComponent as IconClick } from '@/assets/imgs/icon-click.svg';
 import { ReactComponent as IconDelete } from '@/assets/imgs/icon-delete.svg';
 import { ReactComponent as IconLocate } from '@/assets/imgs/icon-locate.svg';
@@ -17,7 +10,7 @@ import SvgIcon from '@/pages/components/SvgIcon';
 import { Space } from 'antd';
 import Button from '@/pages/components/Button';
 import { useSmartStepListStore } from '@/store/smartMode/stepList';
-import { debounce, isEqual } from 'lodash-es';
+import { isEqual } from 'lodash-es';
 import { findKeyBySelectorName } from '@/pages/normalModeContentArea/SelectorTree';
 import { useSelectorStore } from '@/store/selectorStore';
 
@@ -44,6 +37,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
 
   const [item, setItem] = useState(itemProps);
   const [index, setIndex] = useState(indexProps);
+  const [newName, setNewName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isEqual(itemProps, item)) {
@@ -57,56 +51,90 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
     }
   }, [index, indexProps]);
 
-  const _handleChangeVariableNameInput: React.ChangeEventHandler<HTMLInputElement> =
-    useCallback(
-      (e) => {
-        setStepItemByIndex({
-          index,
-          item: {
-            ...item,
-            variable: e.target.value,
-          },
-        });
-      },
-      [index, item, setStepItemByIndex]
-    );
-  const handleChangeVariableNameInput = debounce(
-    _handleChangeVariableNameInput,
-    100
-  );
+  const handleClickStepItem = useCallback(() => {
+    setCurrSelectedItem({ ...stepItems[index], index });
+  }, [index, setCurrSelectedItem, stepItems]);
+
+  //   const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = useCallback(
+  //     (event) => {
+  //       if (event.key === 'Enter') {
+  //         handleClickStepItem();
+  //       }
+  //     },
+  //     [handleClickStepItem]
+  //   );
 
   const setNewSelectorNameInStepItem = useCallback(
-    (newName: string) => {
+    (name: string) => {
       if (currSelectedItem) {
         const key = findKeyBySelectorName(selectors, currSelectedItem)?.[0];
-
         if (key) {
-          setNameByIndex({ index: key.toString(), name: newName });
+          setNameByIndex({ index: key.toString(), name });
         }
       }
     },
     [currSelectedItem, selectors, setNameByIndex]
   );
 
-  const _handleChangeSelectorNameInput: React.ChangeEventHandler<HTMLInputElement> =
+  const handleBlurVariableNameInput = useCallback(() => {
+    setStepItemByIndex({
+      index,
+      item: {
+        ...item,
+        variable: newName,
+      },
+    });
+  }, [index, item, newName, setStepItemByIndex]);
+
+  const handleEnterVariableNameInput: React.KeyboardEventHandler<HTMLInputElement> =
     useCallback(
       (e) => {
-        setNewSelectorNameInStepItem(e.target.value);
-
-        setStepItemByIndex({
-          index,
-          item: {
-            ...item,
-            targetSelector: e.target.value,
-          },
-        });
+        if (newName && e.key === 'Enter') {
+          handleBlurVariableNameInput();
+          handleClickStepItem();
+        }
       },
-      [index, item, setNewSelectorNameInStepItem, setStepItemByIndex]
+      [handleBlurVariableNameInput, handleClickStepItem, newName]
     );
-  const handleChangeSelectorNameInput = debounce(
-    _handleChangeSelectorNameInput,
-    100
-  );
+
+  const handleChangeNameInput: React.ChangeEventHandler<HTMLInputElement> =
+    useCallback((e) => {
+      setNewName(e?.target?.value);
+    }, []);
+
+  const handleBlurSelectorNameInput = useCallback(() => {
+    let _item = { ...item };
+
+    if (newName) {
+      setNewSelectorNameInStepItem(newName);
+
+      setStepItemByIndex({
+        index,
+        item: {
+          ...item,
+          targetSelector: newName,
+        },
+      });
+
+      _item = {
+        ...item,
+        targetSelector: newName,
+      };
+    }
+
+    return _item;
+  }, [newName, setNewSelectorNameInStepItem, setStepItemByIndex, index, item]);
+
+  const handleEnterSelectorNameInput: React.KeyboardEventHandler<HTMLInputElement> =
+    useCallback(
+      (e) => {
+        if (newName && e.key === 'Enter') {
+          const _item = handleBlurSelectorNameInput();
+          setCurrSelectedItem({ index, ..._item });
+        }
+      },
+      [handleBlurSelectorNameInput, index, newName, setCurrSelectedItem]
+    );
 
   const handleClickLocate = useCallback(() => {
     // todo
@@ -117,7 +145,6 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
     const _items = [...stepItems];
 
     _items.splice(index, 1);
-    console.log({ _items });
     setStepItems(_items);
   }, [index, setStepItems, stepItems]);
 
@@ -233,7 +260,9 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
                 className="selector-name"
                 id={`selector-editable-input-${index}`}
                 defaultValue={item.targetSelector}
-                onChange={handleChangeSelectorNameInput}
+                onChange={handleChangeNameInput}
+                onKeyDown={handleEnterSelectorNameInput}
+                onBlur={handleBlurSelectorNameInput}
                 css={css`
                   flex: 1;
                   width: auto;
@@ -269,7 +298,9 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
                 className="selector-name"
                 id={`selector-editable-input-${index}`}
                 defaultValue={item.targetSelector}
-                onChange={handleChangeSelectorNameInput}
+                onChange={handleChangeNameInput}
+                onKeyDown={handleEnterSelectorNameInput}
+                onBlur={handleBlurSelectorNameInput}
                 css={css`
                   flex: 1;
                   width: auto;
@@ -311,7 +342,9 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
                 className="variable-name"
                 id={`variable-editable-input-${index}`}
                 defaultValue={item.variable}
-                onChange={handleChangeVariableNameInput}
+                onChange={handleChangeNameInput}
+                onKeyDown={handleEnterVariableNameInput}
+                onBlur={handleBlurVariableNameInput}
                 css={css`
                   flex: 1;
                   width: auto;
@@ -345,8 +378,11 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
         );
     }
   }, [
-    handleChangeSelectorNameInput,
-    handleChangeVariableNameInput,
+    handleBlurSelectorNameInput,
+    handleBlurVariableNameInput,
+    handleChangeNameInput,
+    handleEnterSelectorNameInput,
+    handleEnterVariableNameInput,
     index,
     item.folderName,
     item.targetSelector,
@@ -354,25 +390,12 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
     item.variable,
   ]);
 
-  const handleClickStepItem = useCallback(() => {
-    setCurrSelectedItem({ ...stepItems[index], index });
-    console.log('handleClickStepItem', stepItems[index]);
-  }, [index, setCurrSelectedItem, stepItems]);
-
-  const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = useCallback(
-    (event) => {
-      if (event.key === 'Enter') {
-        handleClickStepItem();
-      }
-    },
-    [handleClickStepItem]
-  );
-
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events
     <div
       key={index}
       onClick={handleClickStepItem}
-      onKeyDown={handleKeyDown}
+      //   onKeyDown={handleKeyDown}
       role="button"
       tabIndex={index}
       css={css`
