@@ -8,7 +8,7 @@ import { SelectorStoreHttpService } from '@/service/SelectorStoreHttpService';
 import { produce } from 'immer';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { guid } from '@/utils/guid2';
+import { guid } from '@/utils/guid';
 
 export type DropDownMenuAction = 'rename' | 'recapture' | undefined;
 
@@ -23,6 +23,7 @@ export interface SelectorStoreAction {
   setCurrRightClickingItem: (item: EventDataNode<DataNode> | undefined) => void;
   setCurrDropDownMenuAction: (action: DropDownMenuAction) => void;
   setNameByIndex: (payload: { index: string; name: string }) => void;
+  createStore: () => void;
   createNewFolder: () => string | null;
   deleteByIndex: (index: string) => void;
 }
@@ -99,6 +100,16 @@ export const useSelectorStore = create(
         state.selectors = updatedSelectors;
       });
     },
+    createStore: () => {
+      const uuid = guid();
+      set((state) => {
+        state.selectors.push({
+          key: uuid,
+          storeName: `New Store-${uuid}`,
+        });
+      });
+    },
+
     createNewFolder: () => {
       let returnKey = null;
       function updateNodeByKey(
@@ -150,14 +161,14 @@ export const useSelectorStore = create(
                   if (node?.folders) {
                     node?.folders?.push({
                       key: uuid,
-                      folderName: `NewFolder-${uuid}`,
+                      folderName: `New Folder-${uuid}`,
                     });
                   } else {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     node!.folders = [
                       {
                         key: uuid,
-                        folderName: `NewFolder-${uuid}`,
+                        folderName: `New Folder-${uuid}`,
                       },
                     ];
                   }
@@ -166,14 +177,14 @@ export const useSelectorStore = create(
                   if (node?.folders) {
                     node?.folders?.push({
                       key: uuid,
-                      folderName: `NewFolder-${uuid}`,
+                      folderName: `New Folder-${uuid}`,
                     });
                   } else {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     node!.folders = [
                       {
                         key: uuid,
-                        folderName: `NewFolder-${uuid}`,
+                        folderName: `New Folder-${uuid}`,
                       },
                     ];
                   }

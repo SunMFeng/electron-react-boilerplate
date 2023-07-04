@@ -44,7 +44,12 @@ interface SelectorTreeProps {
   visible: boolean;
   data: DataNode[];
 }
-
+const cssTitleOfSelectorTree = css`
+  max-width: 150px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+`;
 const NameChangeInput = React.memo(function NameChangeInputContext(props: {
   index: string;
   defaultValue: string;
@@ -162,7 +167,7 @@ export function useSelectorTreeData() {
                 onKeyDown={handleChangeNameInputKeyDown}
               />
             ) : (
-              selector.storeName
+              <span css={cssTitleOfSelectorTree}>{selector.storeName}</span>
             )}
           </div>
         );
@@ -196,16 +201,7 @@ export function useSelectorTreeData() {
                 onKeyDown={handleChangeNameInputKeyDown}
               />
             ) : (
-              <span
-                css={css`
-                  max-width: 150px;
-                  text-overflow: ellipsis;
-                  white-space: nowrap;
-                  overflow: hidden;
-                `}
-              >
-                {selector.folderName}
-              </span>
+              <span css={cssTitleOfSelectorTree}>{selector.folderName}</span>
             )}
           </div>
         );
@@ -283,7 +279,9 @@ export function useSelectorTreeData() {
                       onKeyDown={handleChangeNameInputKeyDown}
                     />
                   ) : (
-                    item.selectorName
+                    <span css={cssTitleOfSelectorTree}>
+                      {item.selectorName}
+                    </span>
                   )}
                 </div>
               ),
@@ -334,106 +332,115 @@ export function useSelectorTreeData() {
   return { treeNodes, getSelectors };
 }
 
-const PopMore = memo(() => {
-  const createStore = useCallback(() => {
-    // todo
-    console.log('createStore');
-  }, []);
-  const help = useCallback(() => {
-    // todo
-    console.log('help');
-  }, []);
+const PopMore = memo(
+  (props: { visible: boolean; onClickMenuItem: () => void }) => {
+    const { visible, onClickMenuItem } = props;
+    const createStoreAction = useSelectorStore((state) => state.createStore);
 
-  const listItem = useMemo(
-    () => [
-      {
-        label: 'Create Store',
-        icon: IconCreatestore,
-        action: createStore,
-      },
-      {
-        label: 'Help',
-        icon: IconHelp,
-        action: help,
-      },
-    ],
-    [createStore, help]
-  );
+    const createStore = useCallback(() => {
+      createStoreAction();
+      onClickMenuItem();
+      console.log('createStore');
+    }, [createStoreAction, onClickMenuItem]);
+    const help = useCallback(() => {
+      // todo
+      console.log('help');
+    }, []);
 
-  return (
-    <div
-      css={css`
-        z-index: 5;
-        box-sizing: border-box;
-        position: absolute;
-        width: 125px;
-        height: 68px;
-        left: 188px;
-        top: 55px;
-        background: #ffffff;
-        border: 1px solid #ebecf2;
-        border-radius: 4px;
-        padding: 8px;
-        display: flex;
-        flex-direction: column;
-      `}
-    >
-      {listItem.map((item, key) => {
-        const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = (event) => {
-          if (event.key === 'Enter') {
-            item.action();
-          }
-        };
-        const _key = key;
-        return (
-          <div
-            key={_key}
-            onClick={item.action}
-            tabIndex={_key}
-            role="button"
-            onKeyDown={handleKeyDown}
-            css={css`
-              flex: 1;
-              display: flex;
-              flex-direction: row;
-              align-items: center;
-              justify-content: flex-start;
-              border-radius: 2px;
-              background-color: #ffffff;
-              :hover {
-                background-color: #eaeaeb;
-              }
-            `}
-          >
-            <SvgIcon
-              SvgComponent={item.icon}
-              value={16}
+    const listItem = useMemo(
+      () => [
+        {
+          label: 'Create Store',
+          icon: IconCreatestore,
+          action: createStore,
+        },
+        {
+          label: 'Help',
+          icon: IconHelp,
+          action: help,
+        },
+      ],
+      [createStore, help]
+    );
+
+    return (
+      <div
+        css={css`
+          z-index: 5;
+          box-sizing: border-box;
+          position: absolute;
+          width: 125px;
+          height: 68px;
+          left: 188px;
+          top: 55px;
+          background: #ffffff;
+          border: 1px solid #ebecf2;
+          border-radius: 4px;
+          padding: 8px;
+          display: ${visible ? `flex` : `none`};
+          cursor: pointer;
+          flex-direction: column;
+        `}
+      >
+        {listItem.map((item, key) => {
+          const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = (
+            event
+          ) => {
+            if (event.key === 'Enter') {
+              item.action();
+            }
+          };
+          const _key = key;
+          return (
+            <div
+              key={_key}
+              onClick={item.action}
+              tabIndex={_key}
+              role="button"
+              onKeyDown={handleKeyDown}
               css={css`
-                margin-left: 12px;
-                margin-right: 6px;
-                fill: #ffffff;
-              `}
-            />
-
-            <span
-              css={css`
-                font-family: 'Roboto';
-                font-style: normal;
-                font-weight: 400;
-                font-size: 12px;
-                /* identical to box height, or 167% */
-
-                color: #131520;
+                flex: 1;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-start;
+                border-radius: 2px;
+                background-color: #ffffff;
+                :hover {
+                  background-color: #eaeaeb;
+                }
               `}
             >
-              {item.label}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-});
+              <SvgIcon
+                SvgComponent={item.icon}
+                value={16}
+                css={css`
+                  margin-left: 12px;
+                  margin-right: 6px;
+                  fill: #ffffff;
+                `}
+              />
+
+              <span
+                css={css`
+                  font-family: 'Roboto';
+                  font-style: normal;
+                  font-weight: 400;
+                  font-size: 12px;
+                  /* identical to box height, or 167% */
+
+                  color: #131520;
+                `}
+              >
+                {item.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+);
 
 export const findKeyBySelectorName = (
   nodes: SelectorStore[] | SelectorStoreFolder[],
@@ -695,7 +702,7 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
         icon={<SvgIcon SvgComponent={IconMore} value={24} />}
         onClick={handleClickShowMore}
       />
-      {showMore && <PopMore />}
+      <PopMore visible={showMore} onClickMenuItem={handleClickShowMore} />
       <div
         css={css`
           display: flex;
