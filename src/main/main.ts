@@ -10,12 +10,153 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain , Menu} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import reLoader from 'electron-reloader';
-import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+import { MessageType } from './messagetype';
+import { Message } from './message';
+import {
+  ExtraArgument,
+  LocatorStoreTokenOptions,
+  SaveLocatorArgument
+} from './parameters/ExtraArgument';
+import { Locator } from './messageContent/Locator';
+
+const { exec } = require('child_process');
+const fs = require('fs');
+
+const dicRecordProcessMsg: Record<string, string[]> = {};
+let recordProcess = null;
+
+const startSubProcess = () => {
+  recordProcess = exec(
+    '/home/smf/cc-linux/Capturer/Capturer.Linux/bin/Debug/net7.0/Capturer.Linux capture -f selector.json',
+    { maxBuffer: 1024 * 1024 * 20 }
+  );
+
+  recordProcess.stdout.on('data', (data: any) => {
+    console.log('length of data:', data.length);
+
+    let str = data.toString();
+    if (str.startsWith('#CC-Locator-Complete#')) {
+      str = str.substring(21);
+      // eslint-disable-next-line no-use-before-define
+      sendLocatorMessageToRenderProcess(str);
+    } else if (str.startsWith('#CC-Locator-Partial')) {
+      // write complete tag to tmp file.
+      // eslint-disable-next-line no-use-before-define
+      writeOutputStreamReadDoneTag();
+      // eslint-disable-next-line no-use-before-define
+      const key = getPartialMsgKey(str);
+      console.log('key is:', key);
+      // eslint-disable-next-line no-use-before-define
+      const value = getPartialMsgContent(str);
+      console.log('isEnd is:', value.isEnd);
+      // eslint-disable-next-line no-prototype-builtins
+      if (!dicRecordProcessMsg[key]) {
+        dicRecordProcessMsg[key] = [value.result];
+      } else {
+        dicRecordProcessMsg[key].push(value.result);
+      }
+      if (value.isEnd) {
+        const result = dicRecordProcessMsg[key].join('');
+        // eslint-disable-next-line no-use-before-define
+        sendLocatorMessageToRenderProcess(result);
+        dicRecordProcessMsg[key] = [];
+      }
+    } else {
+      console.log('ignore msg:', data.toString());
+    }
+  });
+
+  recordProcess!.on('close', (code: unknown) => {
+    console.log('子进程退出：', code);
+    // restart the process
+    if (code) {
+      recordProcess = startSubProcess();
+      console.log('已经重启子进程.');
+    }
+  });
+};
+
+startSubProcess();
+
+const writeOutputStreamReadDoneTag = () => {
+  const filePath = '/tmp/sharedfile00100.sf';
+  const data = 'Parent Done.';
+  fs.writeFile(filePath, data, (err) => {
+    console.log('write file error.', err);
+  });
+};
+const sendLocatorMessageToRenderProcess = (str: string) => {
+  const obj = JSON.parse(str);
+  const locator: Locator = {
+    locator: obj.locator,
+    screnshot: obj.screenShot,
+  };
+  const msg: Message = {
+    messageType: MessageType.NewLocator,
+    messageContent: locator,
+  };
+  // eslint-disable-next-line no-use-before-define
+  sendMsgToRenderProcess(msg);
+};
+
+const getPartialMsgKey = (str: any) => {
+  return str.substring(20, 52);
+};
+
+const getPartialMsgContent = (str: string) => {
+  let result = '';
+  let isEnd = false;
+  if (str.endsWith('#CC-Locator-Partial-End#')) {
+    const excludeHeader = str.substring(53);
+    // console.log('excludeHeader is:', excludeHeader);
+    result = excludeHeader.slice(0, -56);
+    // console.log('result is:', result);
+    isEnd = true;
+  } else {
+    const excludeHeader = str.substring(53);
+    // console.log('excludeHeader is:', excludeHeader);
+    result = excludeHeader;
+  }
+  return { isEnd, result };
+};
+
+const sendMsgToRenderProcess = (msg: Message) => {
+  // eslint-disable-next-line no-use-before-define
+  mainWindow?.webContents.send('ipc-example', msg);
+};
+
+// -----net core 7 -------------------------------------------------------
+const baseNetAppPath =
+  '/home/smf/cc-linux/Capturer/Capturer.Linux/bin/Debug/net7.0';
+
+const edge = require('electron-edge-js');
+
+const baseDll = `${baseNetAppPath}/Clicknium.LocatorStore.dll`;
+
+console.log('baseDll1', baseDll);
+const localTypeName = 'Clicknium.LocatorStore.LocatorStoreOperate';
+
+const initLocatorStore = edge.func({
+  assemblyFile: baseDll,
+  typeName: localTypeName,
+  methodName: 'InitLocatorStore',
+});
+
+const saveLocatorStore = edge.func({
+  assemblyFile: baseDll,
+  typeName: localTypeName,
+  methodName: 'SaveChanges',
+});
+
+const extraArgument: ExtraArgument = {
+  projectPath: '/home/smf/Documents/test',
+  locatorChain: '',
+};
 
 reLoader(module);
 
@@ -32,8 +173,50 @@ let mainWindow: BrowserWindow | null = null;
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
   console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
+  // event.reply('ipc-example', msgTemplate('pong'));
+
+  if (arg === 'start') {
+    console.log('get start msg');
+  } else if (arg === 'stop') {
+    console.log('get stop msg');
+  } else if (arg instanceof Object) {
+    const msg = arg as Message;
+    // eslint-disable-next-line no-use-before-define
+    messageHandler(msg);
+  }
 });
+
+const messageHandler = (msg: Message) => {
+  switch (msg?.messageType) {
+    case MessageType.ChangeWindowSize:
+      console.log('receive ChangeWindowSize message from render:', msg);
+      mainWindow?.setSize(
+        msg.messageContent.width,
+        msg.messageContent.height,
+        true
+      );
+      break;
+    case MessageType.SaveLocatorStore:
+      console.log('receive SaveLocatorStore message from render:', msg);
+      // eslint-disable-next-line no-use-before-define
+      saveLocatorStoreToFile(msg.messageContent);
+      break;
+    default:
+      break;
+  }
+};
+const saveLocatorStoreToFile = (content: any) => {
+  // saveLocatorStore()
+  const locatorArgs: SaveLocatorArgument = {
+    projectPath: extraArgument.projectPath,
+    input: content,
+  };
+
+  saveLocatorStore(JSON.stringify(locatorArgs), (error: any, result: any) => {
+    if (error) throw error;
+    console.log('savechanges result:', result);
+  });
+};
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -61,9 +244,9 @@ const installExtensions = async () => {
 };
 
 const createWindow = async () => {
-  if (isDebug) {
-    await installExtensions();
-  }
+  // if (isDebug) {
+  //   await installExtensions();
+  // }
 
   const RESOURCES_PATH = app.isPackaged
     ? path.join(process.resourcesPath, 'assets')
@@ -95,6 +278,19 @@ const createWindow = async () => {
       mainWindow.minimize();
     } else {
       mainWindow.show();
+
+      initLocatorStore(
+        JSON.stringify(extraArgument),
+        (error: any, result: any) => {
+          if (error) throw error;
+          // console.log('initLocatorStore result:', result);
+          const msg: Message = {
+            messageType: MessageType.LocatorStoreTree,
+            messageContent: result,
+          };
+          sendMsgToRenderProcess(msg);
+        }
+      );
     }
   });
 
@@ -102,8 +298,21 @@ const createWindow = async () => {
     mainWindow = null;
   });
 
-  const menuBuilder = new MenuBuilder(mainWindow);
-  menuBuilder.buildMenu();
+  const template1 = [
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forcereload' },
+        { role: 'toggledevtools' },
+      ],
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(template1);
+  Menu.setApplicationMenu(menu);
+  // const menuBuilder = new MenuBuilder(mainWindow);
+  // menuBuilder.buildMenu();
 
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata) => {

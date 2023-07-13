@@ -140,9 +140,10 @@
     "css-loader": "^6.8.1",
     "css-minimizer-webpack-plugin": "^5.0.0",
     "detect-port": "^1.5.1",
-    "electron": "^25.2.0",
+    "electron": "^22.0.0",
     "electron-builder": "^24.2.1",
     "electron-devtools-installer": "^3.2.0",
+    "electron-edge-js": "^22.0.1",
     "electron-reloader": "^1.2.3",
     "electronmon": "^2.0.2",
     "eslint": "^8.43.0",
@@ -192,6 +193,16 @@
       "dist",
       "node_modules",
       "package.json"
+    ],
+    "extraFiles":[
+      {
+        "from":"./release/app/node_modules/electron-edge-js/lib/bootstrap/bin/Release/netcoreapp1.1/bootstrap.dll",
+        "to":"./resources/app.asar.unpacked/node_modules/electron-edge-js/lib/bootstrap/bin/Release/netcoreapp1.1/bootstrap.dll"
+      },
+      {
+        "from":"./release/app/node_modules/electron-edge-js/lib/bootstrap/bin/Release/netcoreapp1.1/EdgeJs.dll",
+        "to":"./resources/app.asar.unpacked/node_modules/electron-edge-js/lib/bootstrap/bin/Release/netcoreapp1.1/EdgeJs.dll"
+      }
     ],
     "afterSign": ".erb/scripts/notarize.js",
     "mac": {
