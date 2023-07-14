@@ -9,32 +9,40 @@ import { produce } from 'immer';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { guid } from '@/utils/guid';
+import { Locator } from '@/main/messageContent/Locator';
 
 export type DropDownMenuAction = 'rename' | 'recapture' | undefined;
 
 export interface SelectorStoreState {
   selectors: SelectorStore[];
+  currActiveContainerKey: string | undefined;
   currRightClickingItem: EventDataNode<DataNode> | undefined;
   currDropDownMenuAction: DropDownMenuAction;
 }
 export interface SelectorStoreAction {
   getSelectors: () => Promise<SelectorStore[] | undefined>;
   setSelectors: (selectors: SelectorStore[]) => void;
+  setCurrActiveContainerKey: (container: string | undefined) => void;
   setCurrRightClickingItem: (item: EventDataNode<DataNode> | undefined) => void;
   setCurrDropDownMenuAction: (action: DropDownMenuAction) => void;
   setNameByIndex: (payload: { index: string; name: string }) => void;
   createStore: () => void;
   createNewFolder: () => string | null;
+  addNewSelector: (messageContent: Locator) => string | null;
   deleteByIndex: (index: string) => void;
 }
 
 export const useSelectorStore = create(
   immer<SelectorStoreState & SelectorStoreAction>((set) => ({
     selectors: [],
+    currActiveContainerKey: undefined,
     currRightClickingItem: undefined,
     currDropDownMenuAction: undefined,
     setSelectors: (selectors: SelectorStore[]) => {
       set({ selectors });
+    },
+    setCurrActiveContainerKey: (container: string | undefined) => {
+      set({ currActiveContainerKey: container });
     },
     setCurrRightClickingItem: (item: EventDataNode<DataNode> | undefined) => {
       set({ currRightClickingItem: item });
@@ -109,7 +117,6 @@ export const useSelectorStore = create(
         });
       });
     },
-
     createNewFolder: () => {
       let returnKey = null;
       function updateNodeByKey(
@@ -193,6 +200,68 @@ export const useSelectorStore = create(
               }
             )
           : state.selectors;
+
+        state.selectors = updatedSelectors;
+      });
+      return returnKey;
+    },
+    addNewSelector: (messageContent: Locator) => {
+      let returnKey = null;
+      function updateNodeByKey(
+        selectors: SelectorStore[],
+        key: string,
+        callback: (node: SelectorStoreFolder | SelectorStore) => void
+      ) {
+        return produce(selectors, (draft) => {
+          const findNode = (node: SelectorStoreFolder | SelectorStore) => {
+            if (node.key === key) {
+              callback(node);
+            } else if (node.folders && Array.isArray(node.folders)) {
+              node.folders.forEach((folder: SelectorStoreFolder) => {
+                findNode(folder);
+              });
+            }
+          };
+
+          draft.forEach((store) => {
+            findNode(store);
+          });
+        });
+      }
+
+      set((state) => {
+        // state.selectors[payload.index] = payload.item;
+        const updatedSelectors = updateNodeByKey(
+          state.selectors,
+          state.currActiveContainerKey?.toString() ?? state.selectors[0].key,
+          (node) => {
+            const uuid = guid();
+            if (node.selectors) {
+              node?.selectors?.push({
+                key: uuid,
+                locatorType: 1,
+                selectorName: `New Selector-${uuid}`,
+                targetSelector: messageContent.locator,
+                metaData: '',
+                base64ScreenShot: messageContent?.screenshot ?? '',
+              });
+              returnKey = uuid;
+            } else {
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              node!.selectors = [
+                {
+                  key: uuid,
+                  locatorType: 1,
+                  selectorName: `New Selector-${uuid}`,
+                  targetSelector: messageContent.locator,
+                  metaData: '',
+                  base64ScreenShot: messageContent?.screenshot ?? '',
+                },
+              ];
+              returnKey = uuid;
+            }
+          }
+        );
 
         state.selectors = updatedSelectors;
       });

@@ -8,6 +8,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { MessageType } from '@/main/messagetype';
 import { ReactComponent as IconMore } from '@/assets/imgs/icon-more-normalmode.svg';
 import { ReactComponent as IconHelp } from '@/assets/imgs/icon-help.svg';
 import { ReactComponent as IconCreatestore } from '@/assets/imgs/icon-createstore.svg';
@@ -95,11 +96,13 @@ export function useSelectorTreeData() {
   const currDropDownMenuAction = useSelectorStore(
     (state) => state.currDropDownMenuAction
   );
+  const setSelectors = useSelectorStore((state) => state.setSelectors);
   const getSelectors = useSelectorStore((state) => state.getSelectors);
   const setNameByIndex = useSelectorStore((state) => state.setNameByIndex);
   const setCurrDropDownMenuAction = useSelectorStore(
     (state) => state.setCurrDropDownMenuAction
   );
+  const addNewSelector = useSelectorStore((state) => state.addNewSelector);
 
   const [treeNodes, setTreeNodes] = useState<DataNode[]>([]);
 
@@ -312,15 +315,43 @@ export function useSelectorTreeData() {
       handleChangeNameInputKeyDown,
     ]
   );
+  // todo: init 请求获取tree结构，实现需要沟通有待商榷，先靠接受后端主动postmessage
+  // const init = useCallback(async () => {
+  //   const _selectors = await getSelectors();
+  //   return _selectors ?? [];
+  // }, [getSelectors]);
 
-  const init = useCallback(async () => {
-    const _selectors = await getSelectors();
-    return _selectors ?? [];
-  }, [getSelectors]);
+  // useEffect(() => {
+  //   init();
+  // }, [init]);
 
   useEffect(() => {
-    init();
-  }, [init]);
+    window.electron.ipcRenderer.on(
+      'ipc-example',
+      (arg: { messageContent: any; messageType: MessageType }) => {
+        console.log('init effect: recived message', arg);
+
+        switch (arg.messageType) {
+          case MessageType.LocatorStoreTree: {
+            let mySelectors: SelectorStore[] = [];
+            mySelectors = JSON.parse(arg.messageContent);
+
+            const res = mySelectors;
+            setSelectors(res);
+            console.log('init effect: set tree struc', { res });
+            break;
+          }
+          case MessageType.NewLocator: {
+            addNewSelector(arg.messageContent);
+            console.log('init effect: added new selector');
+            break;
+          }
+          default:
+            break;
+        }
+      }
+    );
+  }, [addNewSelector, setSelectors]);
 
   useEffect(() => {
     if (selectors) {
@@ -328,6 +359,12 @@ export function useSelectorTreeData() {
       setTreeNodes(res);
     }
   }, [selectors, solveTreeNodes]);
+
+  // useEffect(()=>{
+
+  //   addNewSelector()
+
+  // },[])
 
   return { treeNodes, getSelectors };
 }
@@ -483,6 +520,9 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
 
   const smartMode = useModeSwitcherStore((state) => state.smartMode);
   const selectors = useSelectorStore((state) => state.selectors);
+  const setCurrActiveContainerKey = useSelectorStore(
+    (state) => state.setCurrActiveContainerKey
+  );
   const deleteByIndex = useSelectorStore((state) => state.deleteByIndex);
   const currSelectedItem = useSmartStepListStore(
     (state) => state.currSelectedItem
@@ -516,9 +556,19 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
   }, [showMore]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onSelect = useCallback<Defined<SelectEvent>>((keys, info) => {
-    setSelectedKeys(keys);
-  }, []);
+  const onSelect = useCallback<Defined<SelectEvent>>(
+    (keys, info) => {
+      console.log({ keys, info });
+      setSelectedKeys(keys);
+      if ('children' in info.node) {
+        setCurrActiveContainerKey(info.node.key.toString());
+      } else {
+        // todo: find father node and set its key
+        console.log('todo: find father node and set its key');
+      }
+    },
+    [setCurrActiveContainerKey]
+  );
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onExpand = useCallback<Defined<ExpandEvent>>((keys, info) => {
     setExpandKeys(keys);

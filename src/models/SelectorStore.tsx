@@ -1,8 +1,10 @@
 export interface Selector {
   key: string;
-  locatorType?: 'image' | 'ui';
+  locatorType?: 'image' | 'ui' | 0 | 1;
   selectorName: string;
-  targetSelector?: unknown;
+  targetSelector?: string;
+  metaData?: string;
+  base64ScreenShot?: string;
 }
 
 export interface SelectorStoreFolder {

@@ -12,7 +12,25 @@ function App() {
   useEffect(() => {
     const app = document.querySelector('.App') as HTMLDivElement;
     const setAppWidth = () => {
-      app.style.width = smartMode && selectorPanelExpanded ? '654px' : '327px';
+      if (smartMode && selectorPanelExpanded) {
+        app.style.width = '654px';
+        window.electron.ipcRenderer.sendMessage('ipc-example', {
+          messageType: 0,
+          messageContent: {
+            width: 666,
+            height: 690,
+          },
+        });
+      } else {
+        app.style.width = '327px';
+        window.electron.ipcRenderer.sendMessage('ipc-example', {
+          messageType: 0,
+          messageContent: {
+            height: 690,
+            width: 339,
+          },
+        });
+      }
     };
     if (app) {
       setAppWidth();

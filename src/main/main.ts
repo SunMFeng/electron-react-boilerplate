@@ -10,7 +10,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain , Menu} from 'electron';
+import { app, BrowserWindow, shell, ipcMain, Menu } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import reLoader from 'electron-reloader';
@@ -20,7 +20,7 @@ import { Message } from './message';
 import {
   ExtraArgument,
   LocatorStoreTokenOptions,
-  SaveLocatorArgument
+  SaveLocatorArgument,
 } from './parameters/ExtraArgument';
 import { Locator } from './messageContent/Locator';
 
@@ -32,7 +32,7 @@ let recordProcess = null;
 
 const startSubProcess = () => {
   recordProcess = exec(
-    '/home/smf/cc-linux/Capturer/Capturer.Linux/bin/Debug/net7.0/Capturer.Linux capture -f selector.json',
+    '/home/smf/Desktop/code/cc-linux/Capturer/Capturer.Linux/bin/Debug/net7.0/Capturer.Linux capture -f selector.json',
     { maxBuffer: 1024 * 1024 * 20 }
   );
 
@@ -86,7 +86,7 @@ startSubProcess();
 const writeOutputStreamReadDoneTag = () => {
   const filePath = '/tmp/sharedfile00100.sf';
   const data = 'Parent Done.';
-  fs.writeFile(filePath, data, (err) => {
+  fs.writeFile(filePath, data, (err: any) => {
     console.log('write file error.', err);
   });
 };
@@ -94,7 +94,7 @@ const sendLocatorMessageToRenderProcess = (str: string) => {
   const obj = JSON.parse(str);
   const locator: Locator = {
     locator: obj.locator,
-    screnshot: obj.screenShot,
+    screenshot: obj.screenShot,
   };
   const msg: Message = {
     messageType: MessageType.NewLocator,
@@ -132,7 +132,7 @@ const sendMsgToRenderProcess = (msg: Message) => {
 
 // -----net core 7 -------------------------------------------------------
 const baseNetAppPath =
-  '/home/smf/cc-linux/Capturer/Capturer.Linux/bin/Debug/net7.0';
+  '/home/smf/Desktop/code/cc-linux/Capturer/Capturer.Linux/bin/Debug/net7.0';
 
 const edge = require('electron-edge-js');
 

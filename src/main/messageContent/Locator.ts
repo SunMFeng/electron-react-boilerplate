@@ -1,4 +1,4 @@
 export interface Locator {
   locator: string;
-  screnshot: string;
+  screenshot: string;
 }
