@@ -243,18 +243,26 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
       case 'click':
         return (
           <>
-            <span>
+            <span
+              css={css`
+                max-width: 150px;
+                display: flex;
+                flex: 0 0 auto;
+                white-space: nowrap;
+              `}
+            >
               点击
-              <span
-                css={css`
-                  max-width: 100px;
-                  text-overflow: ellipsis;
-                  white-space: nowrap;
-                  overflow: hidden;
-                `}
-              >
-                {item.folderName}
-              </span>
+              <Popover content={item.folderName}>
+                <span
+                  css={css`
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    overflow: hidden;
+                  `}
+                >
+                  {item.folderName}
+                </span>
+              </Popover>
               上的
             </span>
             <Popover

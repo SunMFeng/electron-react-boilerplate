@@ -2,6 +2,8 @@
 import { css } from '@emotion/react';
 import React, { memo, useCallback } from 'react';
 import { Space } from 'antd';
+import { MessageType } from '@/main/messagetype';
+import { useSelectorStore } from '@/store/selectorStore';
 import Button from './Button';
 
 const cssButton = css`
@@ -15,9 +17,14 @@ const cssButton = css`
 
 // eslint-disable-next-line import/prefer-default-export
 export const AppFooter = memo(() => {
+  const selectors = useSelectorStore((state) => state.selectors);
+
   const handleClickComplete = useCallback(() => {
-    // todo
-  }, []);
+    window.electron.ipcRenderer.sendMessage('ipc-example', {
+      messageType: MessageType.SaveLocatorStore,
+      messageContent: JSON.stringify(selectors),
+    });
+  }, [selectors]);
 
   const handleClickCancel = useCallback(() => {
     // todo
