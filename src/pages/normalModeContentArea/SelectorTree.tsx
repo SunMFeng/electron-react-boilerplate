@@ -8,7 +8,6 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { MessageType } from '@/main/messagetype';
 import { ReactComponent as IconMore } from '@/assets/imgs/icon-more-normalmode.svg';
 import { ReactComponent as IconHelp } from '@/assets/imgs/icon-help.svg';
 import { ReactComponent as IconCreatestore } from '@/assets/imgs/icon-createstore.svg';
@@ -23,6 +22,7 @@ import type { Key } from 'rc-tree/lib/interface';
 import { SelectorStore, SelectorStoreFolder } from '@/models/SelectorStore';
 import { useSelectorStore } from '@/store/selectorStore';
 import { useModeSwitcherStore } from '@/store/modeSwitcher';
+import { useSelectorTree } from '@/store/selectorTree';
 import { Dropdown, MenuProps } from 'antd';
 import { StepItem } from '@/models/StepList';
 import Button from '../components/Button';
@@ -96,13 +96,12 @@ export function useSelectorTreeData() {
   const currDropDownMenuAction = useSelectorStore(
     (state) => state.currDropDownMenuAction
   );
-  const setSelectors = useSelectorStore((state) => state.setSelectors);
+
   const getSelectors = useSelectorStore((state) => state.getSelectors);
   const setNameByIndex = useSelectorStore((state) => state.setNameByIndex);
   const setCurrDropDownMenuAction = useSelectorStore(
     (state) => state.setCurrDropDownMenuAction
   );
-  const addNewSelector = useSelectorStore((state) => state.addNewSelector);
 
   const [treeNodes, setTreeNodes] = useState<DataNode[]>([]);
 
@@ -326,46 +325,11 @@ export function useSelectorTreeData() {
   // }, [init]);
 
   useEffect(() => {
-    window.electron.ipcRenderer.on(
-      'ipc-example',
-      (arg: { messageContent: any; messageType: MessageType }) => {
-        console.log('init effect: recived message', arg);
-
-        switch (arg.messageType) {
-          case MessageType.LocatorStoreTree: {
-            let mySelectors: SelectorStore[] = [];
-            mySelectors = JSON.parse(arg.messageContent);
-
-            const res = mySelectors;
-            setSelectors(res);
-            console.log('init effect: set tree struc', { res });
-            break;
-          }
-          case MessageType.NewLocator: {
-            addNewSelector(arg.messageContent);
-            console.log('init effect: added new selector');
-            break;
-          }
-          default:
-            break;
-        }
-      }
-    );
-  }, [addNewSelector, setSelectors]);
-
-  useEffect(() => {
     if (selectors) {
       const res = solveTreeNodes(selectors);
       setTreeNodes(res);
     }
   }, [selectors, solveTreeNodes]);
-
-  // useEffect(()=>{
-
-  //   addNewSelector()
-
-  // },[])
-
   return { treeNodes, getSelectors };
 }
 
@@ -377,7 +341,6 @@ const PopMore = memo(
     const createStore = useCallback(() => {
       createStoreAction();
       onClickMenuItem();
-      console.log('createStore');
     }, [createStoreAction, onClickMenuItem]);
     const help = useCallback(() => {
       // todo
@@ -510,7 +473,7 @@ export const findKeyBySelectorName = (
     }
   });
 
-  console.log({ info, res });
+  // console.log({ info, res });
 
   return res;
 };
@@ -520,17 +483,19 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
 
   const smartMode = useModeSwitcherStore((state) => state.smartMode);
   const selectors = useSelectorStore((state) => state.selectors);
-  const setCurrActiveContainerKey = useSelectorStore(
-    (state) => state.setCurrActiveContainerKey
+  const setCurrActiveContainer = useSelectorStore(
+    (state) => state.setCurrActiveContainer
   );
   const deleteByIndex = useSelectorStore((state) => state.deleteByIndex);
   const currSelectedItem = useSmartStepListStore(
     (state) => state.currSelectedItem
   );
+  const selectedKeys = useSelectorTree((state) => state.selectedKeys);
+  const expandKeys = useSelectorTree((state) => state.expandKeys);
+  const setSelectedKeys = useSelectorTree((state) => state.setSelectedKeys);
+  const setExpandKeys = useSelectorTree((state) => state.setExpandKeys);
 
   const [showMore, setShowMore] = useState(false);
-  const [selectedKeys, setSelectedKeys] = useState<Key[]>([]);
-  const [expandKeys, setExpandKeys] = useState<Key[]>(selectedKeys);
 
   const selectedKeysSwitch = useMemo(() => {
     return smartMode && currSelectedItem
@@ -544,13 +509,6 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
       : expandKeys;
   }, [currSelectedItem, expandKeys, selectors, smartMode]);
 
-  useEffect(() => {
-    if (smartMode) {
-      setSelectedKeys([]);
-      setExpandKeys([]);
-    }
-  }, [smartMode]);
-
   const handleClickShowMore = useCallback(() => {
     setShowMore(!showMore);
   }, [showMore]);
@@ -558,21 +516,26 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onSelect = useCallback<Defined<SelectEvent>>(
     (keys, info) => {
-      console.log({ keys, info });
       setSelectedKeys(keys);
       if ('children' in info.node) {
-        setCurrActiveContainerKey(info.node.key.toString());
+        setCurrActiveContainer({
+          key: info.node.key.toString(),
+          name: info.node.title?.toString() ?? 'Unknown',
+        });
       } else {
         // todo: find father node and set its key
         console.log('todo: find father node and set its key');
       }
     },
-    [setCurrActiveContainerKey]
+    [setCurrActiveContainer, setSelectedKeys]
   );
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onExpand = useCallback<Defined<ExpandEvent>>((keys, info) => {
-    setExpandKeys(keys);
-  }, []);
+  const onExpand = useCallback<Defined<ExpandEvent>>(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (keys, info) => {
+      setExpandKeys(keys);
+    },
+    [setExpandKeys]
+  );
 
   // ===================Treenode右键菜单自定义相关=====================
 
@@ -669,6 +632,8 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
       deleteByIndex,
       selectedKeys,
       setCurrDropDownMenuAction,
+      setExpandKeys,
+      setSelectedKeys,
     ]
   );
 
@@ -722,6 +687,13 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
       document?.removeEventListener('contextmenu', handleDocumentRightClick);
     };
   }, [handleDocumentClick, handleDocumentRightClick]);
+
+  useEffect(() => {
+    if (smartMode) {
+      setSelectedKeys([]);
+      setExpandKeys([]);
+    }
+  }, [setExpandKeys, setSelectedKeys, smartMode]);
 
   // =========================================
 

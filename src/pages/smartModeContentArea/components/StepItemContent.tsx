@@ -4,10 +4,10 @@ import { css } from '@emotion/react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ReactComponent as IconClick } from '@/assets/imgs/icon-click.svg';
 import { ReactComponent as IconDelete } from '@/assets/imgs/icon-delete.svg';
-import { ReactComponent as IconLocate } from '@/assets/imgs/icon-locate.svg';
+// import { ReactComponent as IconLocate } from '@/assets/imgs/icon-locate.svg';
 import { ReactComponent as IconPicture } from '@/assets/imgs/icon-picture.svg';
 import SvgIcon from '@/pages/components/SvgIcon';
-import { Space } from 'antd';
+import { Popover, Space } from 'antd';
 import Button from '@/pages/components/Button';
 import { useSmartStepListStore } from '@/store/smartMode/stepList';
 import { isEqual } from 'lodash-es';
@@ -136,10 +136,10 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
       [handleBlurSelectorNameInput, index, newName, setCurrSelectedItem]
     );
 
-  const handleClickLocate = useCallback(() => {
-    // todo
-    console.log('handleClickLocate');
-  }, []);
+  // const handleClickLocate = useCallback(() => {
+  //   // todo
+  //   console.log('handleClickLocate');
+  // }, []);
 
   const handleClickDelete = useCallback(() => {
     const _items = [...stepItems];
@@ -243,39 +243,63 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
       case 'click':
         return (
           <>
-            <span>{`点击${item.folderName}上的`}</span>
-            <div
-              css={css`
-                height: 16px;
-                line-height: 16px;
-                border: 1px solid #e2e3ed;
-                padding: 1px 8px;
-                background-color: #ffffff;
-              `}
-            >
-              {/* <span className="selector-name">{item.targetSelector}</span> */}
-              <input
-                key={`selector-name-area: ${index}`}
-                type="text"
-                className="selector-name"
-                id={`selector-editable-input-${index}`}
-                defaultValue={item.targetSelector}
-                onChange={handleChangeNameInput}
-                onKeyDown={handleEnterSelectorNameInput}
-                onBlur={handleBlurSelectorNameInput}
+            <span>
+              点击
+              <span
                 css={css`
-                  flex: 1;
-                  width: auto;
-                  box-sizing: border-box;
-                  min-width: 10px;
-                  border: 0;
-                  :focus {
-                    outline: 0;
-                  }
+                  max-width: 100px;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                  overflow: hidden;
                 `}
-              />
-              <SvgIcon SvgComponent={IconPicture} value={16} />
-            </div>
+              >
+                {item.folderName}
+              </span>
+              上的
+            </span>
+            <Popover
+              content={
+                <img
+                  src={item.screenshot}
+                  alt="selector-preview"
+                  style={{ maxWidth: `250px`, height: `auto` }}
+                />
+              }
+            >
+              <div
+                css={css`
+                  height: 16px;
+                  line-height: 16px;
+                  border: 1px solid #e2e3ed;
+                  padding: 1px 8px;
+                  background-color: #ffffff;
+                `}
+              >
+                {/* <span className="selector-name">{item.targetSelector}</span> */}
+                <input
+                  key={`selector-name-area: ${index}`}
+                  type="text"
+                  className="selector-name"
+                  id={`selector-editable-input-${index}`}
+                  defaultValue={item.targetSelector}
+                  onChange={handleChangeNameInput}
+                  onKeyDown={handleEnterSelectorNameInput}
+                  onBlur={handleBlurSelectorNameInput}
+                  css={css`
+                    flex: 1;
+                    width: auto;
+                    box-sizing: border-box;
+                    min-width: 10px;
+                    border: 0;
+                    :focus {
+                      outline: 0;
+                    }
+                  `}
+                />
+
+                <SvgIcon SvgComponent={IconPicture} value={16} />
+              </div>{' '}
+            </Popover>
           </>
         );
       case 'input':
@@ -371,8 +395,19 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
               `}
             >
               <span className="selector-name">{item.targetSelector}</span>
-
-              <SvgIcon SvgComponent={IconPicture} value={16} />
+              <Popover
+                content={
+                  <img
+                    src={item.screenshot}
+                    alt="selector-preview"
+                    css={css`
+                      maxwidth: 300px;
+                    `}
+                  />
+                }
+              >
+                <SvgIcon SvgComponent={IconPicture} value={16} />
+              </Popover>
             </div>
           </>
         );
@@ -385,6 +420,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
     handleEnterVariableNameInput,
     index,
     item.folderName,
+    item.screenshot,
     item.targetSelector,
     item.type,
     item.variable,
@@ -444,7 +480,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
         </div>
         <div className="step-item-action">
           <Space size={8}>
-            <Button
+            {/* <Button
               type="text"
               onClick={handleClickLocate}
               css={css`
@@ -452,7 +488,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
               `}
             >
               <SvgIcon SvgComponent={IconLocate} value={16} />
-            </Button>
+            </Button> */}
             <Button
               type="text"
               onClick={handleClickDelete}
