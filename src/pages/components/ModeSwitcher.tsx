@@ -5,6 +5,7 @@ import { ReactComponent as IconQuestion } from '@/assets/imgs/icon-question.svg'
 import { ReactComponent as IconExpand } from '@/assets/imgs/icon-expand.svg';
 import { Switch, Tooltip } from 'antd';
 import { useModeSwitcherStore } from '@/store/modeSwitcher';
+import { MessageType } from '@/main/messagetype';
 import SvgIcon from './SvgIcon';
 import Button from './Button';
 
@@ -19,11 +20,45 @@ export const ModeSwitcher = memo(() => {
   );
 
   const handleSwitchChanged = useCallback(() => {
-    setSmartMode(!smartMode);
+    const res = setSmartMode(!smartMode);
+    if (res !== true) {
+      const app = document.querySelector('.App') as HTMLDivElement;
+      app.style.width = '327px';
+      window.electron.ipcRenderer.sendMessage('ipc-example', {
+        messageType: MessageType.ChangeWindowSize,
+        messageContent: {
+          height: 690,
+          width: 339,
+        },
+      });
+    }
   }, [setSmartMode, smartMode]);
 
   const handleClickExpand = useCallback(() => {
-    setSelectorPanelExpanded(!selectorPanelExpanded);
+    console.log({ selectorPanelExpanded });
+
+    const res = setSelectorPanelExpanded(!selectorPanelExpanded);
+    const app = document.querySelector('.App') as HTMLDivElement;
+
+    if (res === true) {
+      app.style.width = '654px';
+      window.electron.ipcRenderer.sendMessage('ipc-example', {
+        messageType: MessageType.ChangeWindowSize,
+        messageContent: {
+          width: 666,
+          height: 690,
+        },
+      });
+    } else {
+      app.style.width = '327px';
+      window.electron.ipcRenderer.sendMessage('ipc-example', {
+        messageType: MessageType.ChangeWindowSize,
+        messageContent: {
+          height: 690,
+          width: 339,
+        },
+      });
+    }
   }, [setSelectorPanelExpanded, selectorPanelExpanded]);
 
   return (

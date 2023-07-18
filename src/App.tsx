@@ -10,44 +10,12 @@ import { useSmartStepListStore } from './store/smartMode/stepList';
 import { useSelectorTree } from './store/selectorTree';
 
 function App() {
-  const selectorPanelExpanded = useModeSwitcherStore(
-    (state) => state.selectorPanelExpanded
-  );
   const smartMode = useModeSwitcherStore((state) => state.smartMode);
   const setSelectors = useSelectorStore((state) => state.setSelectors);
   const addNewSelector = useSelectorStore((state) => state.addNewSelector);
   const addStep = useSmartStepListStore((state) => state.addStep);
   const setSelectedKeys = useSelectorTree((state) => state.setSelectedKeys);
   const setExpandKeys = useSelectorTree((state) => state.setExpandKeys);
-
-  // 设置UI styles
-  useEffect(() => {
-    const app = document.querySelector('.App') as HTMLDivElement;
-    const setAppWidth = () => {
-      if (smartMode && selectorPanelExpanded) {
-        app.style.width = '654px';
-        window.electron.ipcRenderer.sendMessage('ipc-example', {
-          messageType: 0,
-          messageContent: {
-            width: 666,
-            height: 690,
-          },
-        });
-      } else {
-        app.style.width = '327px';
-        window.electron.ipcRenderer.sendMessage('ipc-example', {
-          messageType: MessageType.ChangeWindowSize,
-          messageContent: {
-            height: 690,
-            width: 339,
-          },
-        });
-      }
-    };
-    if (app) {
-      setAppWidth();
-    }
-  }, [selectorPanelExpanded, smartMode]);
 
   const handleMessageGet = useCallback(
     (_arg: unknown) => {
