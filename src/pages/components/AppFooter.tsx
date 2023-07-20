@@ -28,7 +28,9 @@ export const AppFooter = memo(() => {
   }, [selectors]);
 
   const handleClickCancel = useCallback(() => {
-    // todo
+    window.electron.ipcRenderer.sendMessage('ipc-example', {
+      messageType: MessageType.Cancel,
+    });
   }, []);
 
   return (

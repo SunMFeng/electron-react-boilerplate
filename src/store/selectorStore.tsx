@@ -219,11 +219,17 @@ export const useSelectorStore = create(
       let returnName = null;
       let parentName = null;
       let parentKey = null;
+      const uuid = guid();
+
+      console.log(`addNewSelector`, messageContent);
+
       function updateNodeByKey(
         selectors: SelectorStore[],
         key: string,
-        callback: (node: SelectorStoreFolder | SelectorStore) => void
+        callback: (node: SelectorStoreFolder | SelectorStore | null) => void
       ) {
+        console.log(1111222233333333);
+
         return produce(selectors, (draft) => {
           const findNode = (node: SelectorStoreFolder | SelectorStore) => {
             if (node.key === key) {
@@ -232,34 +238,75 @@ export const useSelectorStore = create(
               node.folders.forEach((folder: SelectorStoreFolder) => {
                 findNode(folder);
               });
+            } else {
+              console.log(`did not find the key`);
+
+              callback(null);
             }
           };
 
-          draft.forEach((store) => {
-            findNode(store);
-          });
+          if (selectors.length === 0) {
+            console.log(`selectors.length === 0`);
+
+            callback(null);
+          } else {
+            draft.forEach((store) => {
+              findNode(store);
+            });
+          }
         });
       }
 
       set((state) => {
-        // state.selectors[payload.index] = payload.item;
-        const updatedSelectors = updateNodeByKey(
-          state.selectors,
-          state.currActiveContainer?.key.toString() ?? state.selectors[0].key,
-          (node) => {
-            const uuid = guid();
-            if (node.selectors) {
-              node?.selectors?.push({
-                key: uuid,
-                locatorType: 1,
-                selectorName: `New Selector-${uuid}`,
-                targetSelector: messageContent.locator,
-                metaData: '',
-                base64ScreenShot: messageContent?.screenshot ?? '',
-              });
-            } else {
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              node!.selectors = [
+        if (state.selectors.length !== 0) {
+          const updatedSelectors = updateNodeByKey(
+            state.selectors,
+            state.currActiveContainer?.key.toString() ?? state.selectors[0].key,
+            (node) => {
+              console.log('callback', node);
+              if (node !== null) {
+                if (node.selectors) {
+                  node?.selectors?.push({
+                    key: uuid,
+                    locatorType: 1,
+                    selectorName: `New Selector-${uuid}`,
+                    targetSelector: messageContent.locator,
+                    metaData: '',
+                    base64ScreenShot: messageContent?.screenshot ?? '',
+                  });
+                } else {
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  node!.selectors = [
+                    {
+                      key: uuid,
+                      locatorType: 1,
+                      selectorName: `New Selector-${uuid}`,
+                      targetSelector: messageContent.locator,
+                      metaData: '',
+                      base64ScreenShot: messageContent?.screenshot ?? '',
+                    },
+                  ];
+                }
+
+                returnKey = uuid;
+                returnName = `New Selector-${uuid}`;
+                parentKey = node.key;
+                if ('storeName' in node) {
+                  parentName = node.storeName;
+                } else if ('folderName' in node) {
+                  parentName = node.folderName;
+                }
+              }
+            }
+          );
+
+          state.selectors = updatedSelectors;
+        } else {
+          state.selectors = [
+            {
+              key: `store-${uuid}`,
+              storeName: `New Store-${uuid}`,
+              selectors: [
                 {
                   key: uuid,
                   locatorType: 1,
@@ -268,21 +315,15 @@ export const useSelectorStore = create(
                   metaData: '',
                   base64ScreenShot: messageContent?.screenshot ?? '',
                 },
-              ];
-            }
+              ],
+            },
+          ];
 
-            returnKey = uuid;
-            returnName = `New Selector-${uuid}`;
-            parentKey = node.key;
-            if ('storeName' in node) {
-              parentName = node.storeName;
-            } else if ('folderName' in node) {
-              parentName = node.folderName;
-            }
-          }
-        );
-
-        state.selectors = updatedSelectors;
+          returnKey = uuid;
+          returnName = `New Selector-${uuid}`;
+          parentKey = `store-${uuid}`;
+          parentName = `New Store-${uuid}`;
+        }
       });
       return { returnKey, returnName, parentKey, parentName };
     },

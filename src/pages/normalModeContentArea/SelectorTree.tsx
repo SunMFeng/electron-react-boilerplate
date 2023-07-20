@@ -112,6 +112,7 @@ export function useSelectorTreeData() {
       (e) => {
         if (currDropDownMenuAction === 'rename' && e.target?.value) {
           setNewName(e.target?.value);
+          console.log('new name: ', e.target?.value);
         }
       },
       [currDropDownMenuAction]
@@ -119,7 +120,11 @@ export function useSelectorTreeData() {
   const handleChangeNameInputKeyDown: React.KeyboardEventHandler<HTMLInputElement> =
     useCallback(
       (e) => {
+        console.log('handleChangeNameInputKeyDown');
+
         if (currRightClickingItem && e.key === 'Enter') {
+          console.log("currRightClickingItem && e.key === 'Enter'");
+
           if (newName) {
             setNameByIndex({
               index: currRightClickingItem.key.toString(),

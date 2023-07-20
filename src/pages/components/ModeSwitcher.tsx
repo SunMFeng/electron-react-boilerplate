@@ -27,8 +27,8 @@ export const ModeSwitcher = memo(() => {
       window.electron.ipcRenderer.sendMessage('ipc-example', {
         messageType: MessageType.ChangeWindowSize,
         messageContent: {
-          height: 646,
-          width: 339,
+          height: 648,
+          width: 329,
         },
       });
     } else if (isSmartMode === true && selectorPanelExpanded === true) {
@@ -36,8 +36,8 @@ export const ModeSwitcher = memo(() => {
       window.electron.ipcRenderer.sendMessage('ipc-example', {
         messageType: MessageType.ChangeWindowSize,
         messageContent: {
-          width: 666,
-          height: 646,
+          width: 656,
+          height: 648,
         },
       });
     }
@@ -54,7 +54,7 @@ export const ModeSwitcher = memo(() => {
       window.electron.ipcRenderer.sendMessage('ipc-example', {
         messageType: MessageType.ChangeWindowSize,
         messageContent: {
-          width: 666,
+          width: 648,
           height: 646,
         },
       });
@@ -64,7 +64,7 @@ export const ModeSwitcher = memo(() => {
         messageType: MessageType.ChangeWindowSize,
         messageContent: {
           height: 646,
-          width: 339,
+          width: 330,
         },
       });
     }

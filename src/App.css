@@ -10,12 +10,13 @@
   max-width: 646px;
   background-color: green;
   display: flex;
-
+  border: 1px solid lightgray;
 }
 
 .App::-webkit-scrollbar{
  display: none;
 }
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
