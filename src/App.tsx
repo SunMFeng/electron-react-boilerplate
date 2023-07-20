@@ -76,13 +76,13 @@ function App() {
       window.electron.ipcRenderer?.removeAllListeners?.('ipc-example');
     };
   }, [
-    addNewSelector,
-    addStep,
+    // addNewSelector,
+    // addStep,
     handleMessageGet,
-    setExpandKeys,
-    setSelectedKeys,
-    setSelectors,
-    smartMode,
+    // setExpandKeys,
+    // setSelectedKeys,
+    // setSelectors,
+    // smartMode,
   ]);
 
   return (
