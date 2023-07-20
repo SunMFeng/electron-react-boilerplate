@@ -4,4 +4,5 @@ export enum MessageType {
   SaveLocatorStore,
   LocatorStoreTree,
   NewLocator,
+  Cancel,
 }

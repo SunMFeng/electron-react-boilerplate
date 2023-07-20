@@ -24,18 +24,19 @@ import {
 } from './parameters/ExtraArgument';
 import { Locator } from './messageContent/Locator';
 
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 const fs = require('fs');
+const process = require('process');
 
-const dicRecordProcessMsg: Record<string, string[]> = {};
 let recordProcess = null;
 
 const startSubProcess = () => {
-  recordProcess = exec(
-    '/home/smf/Desktop/code/cc-linux/Capturer/Capturer.Linux/bin/Debug/net7.0/Capturer.Linux capture -f selector.json',
-    { maxBuffer: 1024 * 1024 * 20 }
+  recordProcess = spawn(
+    '/home/smf/Desktop/newcode/RPACore/Capturer/Capturer.Linux/bin/Debug/net7.0/Capturer.Linux',
+    ['capture', '-f', 'selector.json'],
+    { maxBuffer: 1024 * 1024 * 20, detached: true }
   );
-
+  console.log('recordProcess id:', recordProcess.pid);
   recordProcess.stdout.on('data', (data: any) => {
     console.log('length of data:', data.length);
 
@@ -44,28 +45,6 @@ const startSubProcess = () => {
       str = str.substring(21);
       // eslint-disable-next-line no-use-before-define
       sendLocatorMessageToRenderProcess(str);
-    } else if (str.startsWith('#CC-Locator-Partial')) {
-      // write complete tag to tmp file.
-      // eslint-disable-next-line no-use-before-define
-      writeOutputStreamReadDoneTag();
-      // eslint-disable-next-line no-use-before-define
-      const key = getPartialMsgKey(str);
-      console.log('key is:', key);
-      // eslint-disable-next-line no-use-before-define
-      const value = getPartialMsgContent(str);
-      console.log('isEnd is:', value.isEnd);
-      // eslint-disable-next-line no-prototype-builtins
-      if (!dicRecordProcessMsg[key]) {
-        dicRecordProcessMsg[key] = [value.result];
-      } else {
-        dicRecordProcessMsg[key].push(value.result);
-      }
-      if (value.isEnd) {
-        const result = dicRecordProcessMsg[key].join('');
-        // eslint-disable-next-line no-use-before-define
-        sendLocatorMessageToRenderProcess(result);
-        dicRecordProcessMsg[key] = [];
-      }
     } else {
       console.log('ignore msg:', data.toString());
     }
@@ -80,21 +59,18 @@ const startSubProcess = () => {
     }
   });
 };
-
 startSubProcess();
 
-const writeOutputStreamReadDoneTag = () => {
-  const filePath = '/tmp/sharedfile00100.sf';
-  const data = 'Parent Done.';
-  fs.writeFile(filePath, data, (err: any) => {
-    console.log('write file error.', err);
-  });
-};
 const sendLocatorMessageToRenderProcess = (str: string) => {
   const obj = JSON.parse(str);
+  const tempScreenshotFile = obj.screenShot;
+  console.log('tempScreenshotFile', tempScreenshotFile);
+  let base64String = '';
+
+  base64String = imageToBase64(tempScreenshotFile);
   const locator: Locator = {
     locator: obj.locator,
-    screenshot: obj.screenShot,
+    screenshot: base64String,
   };
   const msg: Message = {
     messageType: MessageType.NewLocator,
@@ -104,25 +80,11 @@ const sendLocatorMessageToRenderProcess = (str: string) => {
   sendMsgToRenderProcess(msg);
 };
 
-const getPartialMsgKey = (str: any) => {
-  return str.substring(20, 52);
-};
-
-const getPartialMsgContent = (str: string) => {
-  let result = '';
-  let isEnd = false;
-  if (str.endsWith('#CC-Locator-Partial-End#')) {
-    const excludeHeader = str.substring(53);
-    // console.log('excludeHeader is:', excludeHeader);
-    result = excludeHeader.slice(0, -56);
-    // console.log('result is:', result);
-    isEnd = true;
-  } else {
-    const excludeHeader = str.substring(53);
-    // console.log('excludeHeader is:', excludeHeader);
-    result = excludeHeader;
-  }
-  return { isEnd, result };
+const imageToBase64 = (path: any) => {
+  const data = fs.readFileSync(path);
+  let base64String = Buffer.from(data).toString('base64');
+  base64String = `data:image/jpeg;base64,${base64String}`;
+  return base64String;
 };
 
 const sendMsgToRenderProcess = (msg: Message) => {
@@ -132,7 +94,7 @@ const sendMsgToRenderProcess = (msg: Message) => {
 
 // -----net core 7 -------------------------------------------------------
 const baseNetAppPath =
-  '/home/smf/Desktop/code/cc-linux/Capturer/Capturer.Linux/bin/Debug/net7.0';
+  '/home/smf/Desktop/newcode/RPACore/Capturer/Capturer.Linux/bin/Debug/net7.0';
 
 const edge = require('electron-edge-js');
 
@@ -171,15 +133,7 @@ class AppUpdater {
 let mainWindow: BrowserWindow | null = null;
 
 ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  // event.reply('ipc-example', msgTemplate('pong'));
-
-  if (arg === 'start') {
-    console.log('get start msg');
-  } else if (arg === 'stop') {
-    console.log('get stop msg');
-  } else if (arg instanceof Object) {
+  if (arg instanceof Object) {
     const msg = arg as Message;
     // eslint-disable-next-line no-use-before-define
     messageHandler(msg);
@@ -200,6 +154,13 @@ const messageHandler = (msg: Message) => {
       console.log('receive SaveLocatorStore message from render:', msg);
       // eslint-disable-next-line no-use-before-define
       saveLocatorStoreToFile(msg.messageContent);
+      process.kill(recordProcess.pid, 'SIGTERM');
+      app.quit();
+      break;
+    case MessageType.Cancel:
+      console.log('receive Cancel message from render:', msg);
+      process.kill(recordProcess.pid, 'SIGTERM');
+      app.quit();
       break;
     default:
       break;
@@ -261,18 +222,19 @@ const createWindow = async () => {
     width: 339,
     height: 646,
     frame: false,
-    icon: getAssetPath('icon.png'),
+    resizable: false,
+    icon: getAssetPath('logo.png'),
     webPreferences: {
+      nodeIntegration: true,
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
     },
+    alwaysOnTop: true,
+    // skipTaskbar: true,
   });
 
-  mainWindow.setResizable(false);
-
   mainWindow.loadURL(resolveHtmlPath('index.html'));
-
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
@@ -280,6 +242,7 @@ const createWindow = async () => {
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
+      mainWindow.setTitle('Clicknium Recorder');
       mainWindow.show();
 
       initLocatorStore(
@@ -298,6 +261,8 @@ const createWindow = async () => {
   });
 
   mainWindow.on('closed', () => {
+    process.kill(recordProcess.pid, 'SIGTERM');
+    app.quit();
     mainWindow = null;
   });
 
@@ -313,7 +278,7 @@ const createWindow = async () => {
   ];
 
   const menu = Menu.buildFromTemplate(template1);
-  Menu.setApplicationMenu(menu);
+  Menu.setApplicationMenu(null);
   // const menuBuilder = new MenuBuilder(mainWindow);
   // menuBuilder.buildMenu();
 
