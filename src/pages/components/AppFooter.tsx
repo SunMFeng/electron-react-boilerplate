@@ -13,6 +13,7 @@ const cssButton = css`
   font-size: 14px;
   width: 94px;
   height: 32px;
+  -webkit-app-region: no-drag;
 `;
 
 // eslint-disable-next-line import/prefer-default-export

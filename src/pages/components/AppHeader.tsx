@@ -8,6 +8,7 @@ export const AppHeader = memo(() => {
   return (
     <div
       css={css`
+        -webkit-app-region: drag;
         display: flex;
         align-items: center;
         flex-wrap: wrap;

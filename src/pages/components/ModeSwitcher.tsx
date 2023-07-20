@@ -20,33 +20,42 @@ export const ModeSwitcher = memo(() => {
   );
 
   const handleSwitchChanged = useCallback(() => {
-    const res = setSmartMode(!smartMode);
-    if (res !== true) {
-      const app = document.querySelector('.App') as HTMLDivElement;
+    const isSmartMode = setSmartMode(!smartMode);
+    const app = document.querySelector('.App') as HTMLDivElement;
+    if (isSmartMode !== true) {
       app.style.width = '327px';
       window.electron.ipcRenderer.sendMessage('ipc-example', {
         messageType: MessageType.ChangeWindowSize,
         messageContent: {
-          height: 690,
+          height: 646,
           width: 339,
         },
       });
-    }
-  }, [setSmartMode, smartMode]);
-
-  const handleClickExpand = useCallback(() => {
-    console.log({ selectorPanelExpanded });
-
-    const res = setSelectorPanelExpanded(!selectorPanelExpanded);
-    const app = document.querySelector('.App') as HTMLDivElement;
-
-    if (res === true) {
+    } else if (isSmartMode === true && selectorPanelExpanded === true) {
       app.style.width = '654px';
       window.electron.ipcRenderer.sendMessage('ipc-example', {
         messageType: MessageType.ChangeWindowSize,
         messageContent: {
           width: 666,
-          height: 690,
+          height: 646,
+        },
+      });
+    }
+  }, [selectorPanelExpanded, setSmartMode, smartMode]);
+
+  const handleClickExpand = useCallback(() => {
+    console.log({ selectorPanelExpanded });
+
+    const isExpanded = setSelectorPanelExpanded(!selectorPanelExpanded);
+    const app = document.querySelector('.App') as HTMLDivElement;
+
+    if (isExpanded === true) {
+      app.style.width = '654px';
+      window.electron.ipcRenderer.sendMessage('ipc-example', {
+        messageType: MessageType.ChangeWindowSize,
+        messageContent: {
+          width: 666,
+          height: 646,
         },
       });
     } else {
@@ -54,7 +63,7 @@ export const ModeSwitcher = memo(() => {
       window.electron.ipcRenderer.sendMessage('ipc-example', {
         messageType: MessageType.ChangeWindowSize,
         messageContent: {
-          height: 690,
+          height: 646,
           width: 339,
         },
       });
@@ -82,7 +91,7 @@ export const ModeSwitcher = memo(() => {
           flex: 1;
           width: 100%;
           max-width: 327px;
-          height: 56px;
+          height: 56px !important;
           max-height: 57px;
           background: #ffffff;
         `}
@@ -164,6 +173,7 @@ export const ModeSwitcher = memo(() => {
             svg {
               flex: 1;
             }
+            -webkit-app-region: no-drag;
           `}
           onClick={handleClickExpand}
         >

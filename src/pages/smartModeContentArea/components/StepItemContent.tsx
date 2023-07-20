@@ -443,6 +443,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
       role="button"
       tabIndex={index}
       css={css`
+        -webkit-app-region: no-drag;
         display: flex;
         flex-direction: column;
         flex: 1;
@@ -502,6 +503,7 @@ export const StepItemContent = memo((props: StepItemContentProps) => {
               onClick={handleClickDelete}
               css={css`
                 height: 18px;
+                -webkit-app-region: no-drag;
               `}
             >
               <SvgIcon SvgComponent={IconDelete} value={16} />

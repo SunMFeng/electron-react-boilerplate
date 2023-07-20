@@ -399,6 +399,7 @@ const PopMore = memo(
               role="button"
               onKeyDown={handleKeyDown}
               css={css`
+                -webkit-app-region: no-drag;
                 flex: 1;
                 display: flex;
                 flex-direction: row;
@@ -712,6 +713,7 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
       <Button
         type="text"
         css={css`
+          -webkit-app-region: no-drag;
           position: absolute;
           top: 23px;
           right: 24px;

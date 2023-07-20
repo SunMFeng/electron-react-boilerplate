@@ -75,15 +75,7 @@ function App() {
     return () => {
       window.electron.ipcRenderer?.removeAllListeners?.('ipc-example');
     };
-  }, [
-    addNewSelector,
-    addStep,
-    handleMessageGet,
-    setExpandKeys,
-    setSelectedKeys,
-    setSelectors,
-    smartMode,
-  ]);
+  }, [handleMessageGet]);
 
   return (
     <div className="App">

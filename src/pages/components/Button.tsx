@@ -35,6 +35,7 @@ export default memo(
         ref={antdButtonRef}
         css={[
           css`
+            -webkit-app-region: no-drag;
             padding: 0;
             background-color: ${backgroundColor};
             color: ${color};

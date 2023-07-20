@@ -16,6 +16,7 @@ const cssGeneral = css`
   align-items: center;
   justify-content: flex-start;
   background: #ffffff;
+  margin-bottom: 16px;
 `;
 const cssSelect = css`
   width: 151px;

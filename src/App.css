@@ -1,3 +1,8 @@
+* {
+  padding: 0;
+  margin: 0;
+}
+
 .App {
   text-align: center;
   width: 327px;
@@ -5,8 +10,12 @@
   max-width: 646px;
   background-color: green;
   display: flex;
+
 }
 
+.App::-webkit-scrollbar{
+ display: none;
+}
 .App-logo {
   height: 40vmin;
   pointer-events: none;
