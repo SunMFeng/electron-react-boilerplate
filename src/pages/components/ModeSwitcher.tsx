@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useEffect } from 'react';
 import { ReactComponent as IconQuestion } from '@/assets/imgs/icon-question.svg';
 import { ReactComponent as IconExpand } from '@/assets/imgs/icon-expand.svg';
 import { Switch, Tooltip } from 'antd';
@@ -20,10 +20,13 @@ export const ModeSwitcher = memo(() => {
   );
 
   const handleSwitchChanged = useCallback(() => {
-    const isSmartMode = setSmartMode(!smartMode);
-    const app = document.querySelector('.App') as HTMLDivElement;
-    if (isSmartMode !== true) {
-      app.style.width = '327px';
+    setSmartMode(!smartMode);
+  }, [setSmartMode, smartMode]);
+
+  useEffect(() => {
+    // const app = document.querySelector('.App') as HTMLDivElement;
+    if (smartMode !== true) {
+      // app.style.width = '327px';
       window.electron.ipcRenderer.sendMessage('ipc-example', {
         messageType: MessageType.ChangeWindowSize,
         messageContent: {
@@ -31,8 +34,8 @@ export const ModeSwitcher = memo(() => {
           width: 329,
         },
       });
-    } else if (isSmartMode === true && selectorPanelExpanded === true) {
-      app.style.width = '654px';
+    } else if (smartMode === true && selectorPanelExpanded === true) {
+      // app.style.width = '654px';
       window.electron.ipcRenderer.sendMessage('ipc-example', {
         messageType: MessageType.ChangeWindowSize,
         messageContent: {
@@ -41,16 +44,19 @@ export const ModeSwitcher = memo(() => {
         },
       });
     }
-  }, [selectorPanelExpanded, setSmartMode, smartMode]);
+  }, [selectorPanelExpanded, smartMode]);
 
   const handleClickExpand = useCallback(() => {
     console.log({ selectorPanelExpanded });
 
-    const isExpanded = setSelectorPanelExpanded(!selectorPanelExpanded);
-    const app = document.querySelector('.App') as HTMLDivElement;
+    setSelectorPanelExpanded(!selectorPanelExpanded);
+  }, [setSelectorPanelExpanded, selectorPanelExpanded]);
 
-    if (isExpanded === true) {
-      app.style.width = '654px';
+  useEffect(() => {
+    // const app = document.querySelector('.App') as HTMLDivElement;
+
+    if (selectorPanelExpanded === true) {
+      // app.style.width = '654px';
       window.electron.ipcRenderer.sendMessage('ipc-example', {
         messageType: MessageType.ChangeWindowSize,
         messageContent: {
@@ -59,7 +65,7 @@ export const ModeSwitcher = memo(() => {
         },
       });
     } else {
-      app.style.width = '327px';
+      // app.style.width = '327px';
       window.electron.ipcRenderer.sendMessage('ipc-example', {
         messageType: MessageType.ChangeWindowSize,
         messageContent: {
@@ -68,7 +74,7 @@ export const ModeSwitcher = memo(() => {
         },
       });
     }
-  }, [setSelectorPanelExpanded, selectorPanelExpanded]);
+  }, [selectorPanelExpanded]);
 
   return (
     <div
@@ -90,7 +96,7 @@ export const ModeSwitcher = memo(() => {
           align-items: center;
           flex: 1;
           width: 100%;
-          max-width: 327px;
+          // max-width: 327px;
           height: 56px !important;
           max-height: 57px;
           background: #ffffff;
@@ -129,9 +135,9 @@ export const ModeSwitcher = memo(() => {
                 margin-right: 4px;
               `}
             >
-              Smart Mode:
+              智能模式:
             </p>
-            <Tooltip title="TODO">
+            <Tooltip title="开启智能录制后，将会记录您在页面的所有操作并按照操作顺序生成代码。">
               <div
                 css={css`
                   height: 16px;

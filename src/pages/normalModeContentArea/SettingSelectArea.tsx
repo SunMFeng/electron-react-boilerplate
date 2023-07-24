@@ -81,7 +81,7 @@ export const SettingSelectArea = memo((props: SettingSelectAreaProps) => {
   }[] = useMemo(
     () => [
       {
-        label: 'AutoDetect',
+        label: '自动检测',
         value: 'AutoDetect',
       },
       {
@@ -126,7 +126,7 @@ export const SettingSelectArea = memo((props: SettingSelectAreaProps) => {
   }[] = useMemo(
     () => [
       {
-        label: 'None',
+        label: '无',
         value: '',
       },
       {
@@ -159,7 +159,7 @@ export const SettingSelectArea = memo((props: SettingSelectAreaProps) => {
             justify-content: flex-start;
           `}
         >
-          <p css={cssLabelText}>Capture Technology:</p>
+          <p css={cssLabelText}>录制技术:</p>
         </div>
 
         <div
@@ -190,7 +190,7 @@ export const SettingSelectArea = memo((props: SettingSelectAreaProps) => {
             justify-content: flex-start;
           `}
         >
-          <p css={cssLabelText}>Advanced Option:</p>
+          <p css={cssLabelText}>高级选项:</p>
         </div>
 
         <div

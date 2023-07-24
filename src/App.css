@@ -5,9 +5,13 @@
 
 .App {
   text-align: center;
-  width: 327px;
+  /* width: 327px;
   height: 646px;
-  max-width: 646px;
+  max-width: 646px; */
+  overflow: hidden;
+  /* width: 100vw; */
+  height: 100vh;
+  box-sizing: border-box;
   background-color: green;
   display: flex;
   border: 1px solid lightgray;

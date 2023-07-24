@@ -1,8 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import React, { memo } from 'react';
-import SvgIcon from './SvgIcon';
-import { ReactComponent as IconCC } from '../../assets/imgs/icon-cc-with-title.svg';
+import IconTitle from '../../assets/imgs/icon-with-title.png';
 
 export const AppHeader = memo(() => {
   return (
@@ -22,7 +21,7 @@ export const AppHeader = memo(() => {
         -webkit-app-region: drag;
       `}
     >
-      <SvgIcon
+      {/* <SvgIcon
         css={css`
           margin-left: 24px;
         `}
@@ -31,6 +30,15 @@ export const AppHeader = memo(() => {
           width: 159,
           height: 24,
         }}
+      /> */}
+      <img
+        src={IconTitle}
+        style={{
+          marginLeft: 24,
+          width: 159,
+          height: 24,
+        }}
+        alt="icon-title"
       />
     </div>
   );

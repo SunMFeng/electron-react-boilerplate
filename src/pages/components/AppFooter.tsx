@@ -60,7 +60,7 @@ export const AppFooter = memo(() => {
               margin: auto;
             `}
           >
-            Complete
+            保存
           </div>
         </Button>
         <Button css={cssButton} type="default" onClick={handleClickCancel}>
@@ -70,7 +70,7 @@ export const AppFooter = memo(() => {
               margin: auto;
             `}
           >
-            Cancel
+            取消
           </div>
         </Button>
       </Space>

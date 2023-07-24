@@ -738,7 +738,7 @@ export const SelectorTree = memo((props: SelectorTreeProps) => {
           flex: 1;
           overflow: auto;
           /* max-height: 363px; */
-          max-height: 478px;
+          // max-height: 478px;
           margin-top: 23px;
           margin-right: 24px;
           margin-left: 24px;
