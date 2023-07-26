@@ -72,7 +72,6 @@ const startSubProcess = () => {
     }
   });
 };
-startSubProcess();
 
 const sendLocatorMessageToRenderProcess = (str: string) => {
   const obj = JSON.parse(str);
@@ -132,6 +131,8 @@ extraArgument.projectPath = processArgs.path;
 extraArgument.dotnetProgramPath = processArgs.execpath;
 console.log('project path:', extraArgument.projectPath);
 console.log('dotnet program path:', extraArgument.dotnetProgramPath);
+
+startSubProcess();
 
 // -----net core 7 -------------------------------------------------------
 let baseNetAppPath;
