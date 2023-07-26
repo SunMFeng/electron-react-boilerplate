@@ -40,11 +40,15 @@ const extraArgument: ExtraArgument = {
 const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 const startSubProcess = () => {
-  recordProcess = spawn(
-    '/home/smf/Desktop/newcode/RPACore/Capturer/Capturer.Linux/bin/Debug/net7.0/Capturer.Linux',
-    ['capture', '-f', 'selector.json'],
-    { maxBuffer: 1024 * 1024 * 20, detached: true }
-  );
+  let cpaturePath =
+    '/home/smf/Desktop/newcode/RPACore/Capturer/Capturer.Linux/bin/Debug/net7.0/Capturer.Linux';
+  if (!isDebug) {
+    cpaturePath = `${extraArgument.dotnetProgramPath}/Capturer.Linux`;
+  }
+  recordProcess = spawn(cpaturePath, ['capture', '-f', 'selector.json'], {
+    maxBuffer: 1024 * 1024 * 20,
+    detached: true,
+  });
   console.log('recordProcess id:', recordProcess.pid);
   recordProcess.stdout.on('data', (data: any) => {
     console.log('length of data:', data.length);
