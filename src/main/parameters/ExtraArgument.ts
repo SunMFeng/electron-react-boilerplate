@@ -9,4 +9,5 @@ export interface ExtraArgument {
   projectPath: string;
   locatorChain: string;
   defaultStoreId?: LocatorStoreTokenOptions;
+  dotnetProgramPath: string;
 }

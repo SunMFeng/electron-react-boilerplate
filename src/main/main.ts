@@ -14,6 +14,7 @@ import { app, BrowserWindow, shell, ipcMain, Menu } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import reLoader from 'electron-reloader';
+import { program } from 'commander';
 import { resolveHtmlPath } from './util';
 import { MessageType } from './messagetype';
 import { Message } from './message';
@@ -24,12 +25,20 @@ import {
 } from './parameters/ExtraArgument';
 import { Locator } from './messageContent/Locator';
 
-const { exec, spawn } = require('child_process');
+const { spawn } = require('child_process');
 const fs = require('fs');
 const process = require('process');
 
 let recordProcess = null;
 
+const extraArgument: ExtraArgument = {
+  projectPath: '/home/smf/Documents/test',
+  dotnetProgramPath: '',
+  locatorChain: '',
+};
+
+const isDebug =
+  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 const startSubProcess = () => {
   recordProcess = spawn(
     '/home/smf/Desktop/newcode/RPACore/Capturer/Capturer.Linux/bin/Debug/net7.0/Capturer.Linux',
@@ -83,7 +92,7 @@ const sendLocatorMessageToRenderProcess = (str: string) => {
 const imageToBase64 = (path: any) => {
   const data = fs.readFileSync(path);
   let base64String = Buffer.from(data).toString('base64');
-  base64String = `data:image/jpeg;base64,${base64String}`;
+  // base64String = `data:image/jpeg;base64,${base64String}`;
   return base64String;
 };
 
@@ -91,16 +100,50 @@ const sendMsgToRenderProcess = (msg: Message) => {
   // eslint-disable-next-line no-use-before-define
   mainWindow?.webContents.send('ipc-example', msg);
 };
+let processArgs;
+
+if (process.argv[1] === 'start') {
+  program
+    .command('start')
+    .option('-p, --path <string>', 'the project path.')
+    .option('-t, --type <string>', 'the record type.')
+    .option('-e, --execpath <string>', 'the dotnet program path.')
+    .option('-dsid, --defaultstoreid <string>', 'the default store id.')
+    .action((options, command) => {
+      console.log(options);
+      processArgs = options;
+    })
+    .parse(process.argv);
+} else if (process.argv[1] === 'verify') {
+  program
+    .command('verify')
+    .option('-s, --selector <string>', 'the selector to be verified.')
+    .option('-e, --execpath <string>', 'the dotnet program path.')
+    .action((options, command) => {
+      processArgs = options;
+    })
+    .parse(process.argv);
+}
+extraArgument.projectPath = processArgs.path;
+extraArgument.dotnetProgramPath = processArgs.execpath;
+console.log('project path:', extraArgument.projectPath);
+console.log('dotnet program path:', extraArgument.dotnetProgramPath);
 
 // -----net core 7 -------------------------------------------------------
-const baseNetAppPath =
-  '/home/smf/Desktop/newcode/RPACore/Capturer/Capturer.Linux/bin/Debug/net7.0';
+let baseNetAppPath;
+if (isDebug) {
+  baseNetAppPath =
+    '/home/smf/Desktop/newcode/RPACore/Capturer/Capturer.Linux/bin/Debug/net7.0';
+  extraArgument.projectPath = '/home/smf/Documents/test';
+} else {
+  baseNetAppPath = extraArgument.dotnetProgramPath;
+}
 
 const edge = require('electron-edge-js');
 
 const baseDll = `${baseNetAppPath}/Clicknium.LocatorStore.dll`;
 
-console.log('baseDll1', baseDll);
+console.log('dotnet dll path:', baseDll);
 const localTypeName = 'Clicknium.LocatorStore.LocatorStoreOperate';
 
 const initLocatorStore = edge.func({
@@ -114,11 +157,6 @@ const saveLocatorStore = edge.func({
   typeName: localTypeName,
   methodName: 'SaveChanges',
 });
-
-const extraArgument: ExtraArgument = {
-  projectPath: '/home/smf/Documents/test',
-  locatorChain: '',
-};
 
 reLoader(module);
 
@@ -144,11 +182,13 @@ const messageHandler = (msg: Message) => {
   switch (msg?.messageType) {
     case MessageType.ChangeWindowSize:
       console.log('receive ChangeWindowSize message from render:', msg);
+      mainWindow?.setResizable(true);
       mainWindow?.setSize(
         msg.messageContent.width,
         msg.messageContent.height,
         true
       );
+      mainWindow?.setResizable(false);
       break;
     case MessageType.SaveLocatorStore:
       console.log('receive SaveLocatorStore message from render:', msg);
@@ -184,9 +224,6 @@ if (process.env.NODE_ENV === 'production') {
   sourceMapSupport.install();
 }
 
-const isDebug =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
-
 if (isDebug) {
   require('electron-debug')();
 }
@@ -219,7 +256,7 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 339,
+    width: 330,
     height: 646,
     frame: false,
     resizable: false,
@@ -261,7 +298,7 @@ const createWindow = async () => {
   });
 
   mainWindow.on('closed', () => {
-    process.kill(recordProcess.pid, 'SIGTERM');
+    // process.kill(recordProcess.pid, 'SIGTERM');
     app.quit();
     mainWindow = null;
   });
@@ -309,6 +346,7 @@ app
   .whenReady()
   .then(() => {
     createWindow();
+
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
       // dock icon is clicked and there are no other windows open.
